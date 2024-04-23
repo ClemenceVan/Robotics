@@ -1,0 +1,12 @@
+## Build Instructions
+
+### To build the project, follow these steps:
+
+Create build directory
+<code>mkdir build</code>
+
+Build project
+<code>cmake --build ./build</code>
+
+Execute binary
+<code>./Robot</code> or <code>./Robot.exe</code>
