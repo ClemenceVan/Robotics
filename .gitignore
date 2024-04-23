@@ -1,0 +1,5 @@
+*vcxproj*
+*cmake*
+*.sln
+*.vscode
+*build
