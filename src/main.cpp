@@ -65,8 +65,8 @@
 //             // m(0, 0) = cos();
 //             // m(0, 1) = -sin();
 //             // m(0, 2) = x;//S alpha
-//             // m(1, 0) = sin();//gamma
-//             // m(1, 1) = cos();//gamma
+//             // m(1, 0) = sin();//_gamma
+//             // m(1, 1) = cos();//_gamma
 //             // m(1, 2) = y;// beta
 //             // m(2, 0) = 0;
 //             // m(2, 1) = 0;
@@ -149,9 +149,10 @@
 #include <string>
 #include <vector>
 
+#include "./include.hpp"
 
 int alpha, beta = 0;
-int gamma = (-90 * M_PI / 180)/4;
+int _gamma = (-90 * M_PI / 180)/4;
 double start_x = 13.5; // to be changed when start
 double start_y = 10.5; // to be changed when start
 int start_angle = 0;
@@ -343,12 +344,13 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
 }
 
 int main() {
-    std::ifstream data ("testfile90.txt");
+    screen();
+    std::ifstream data ("./testfile90.txt");
     std::vector<int> buffer;
     // Eigen::matrix<double, 
     // sensor coordinates to robot coordinates
-    RMatrix <<  cos(gamma), -sin(gamma), alpha,
-                sin(gamma), cos(gamma), beta,
+    RMatrix <<  cos(_gamma), -sin(_gamma), alpha,
+                sin(_gamma), cos(_gamma), beta,
                 0, 0, 1;
     // robot to world coordinates
     CMatrix <<  cos(start_angle), -sin(start_angle), start_x,
