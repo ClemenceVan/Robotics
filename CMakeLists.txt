@@ -1,4 +1,8 @@
-cmake_minimum_required (VERSION 3.11)
+set(CMAKE_CXX_STANDARD 17)
+cmake_minimum_required(VERSION 3.10)
+find_program(CMAKE_C_COMPILER NAMES $ENV{CC} gcc PATHS ENV PATH NO_DEFAULT_PATH)
+find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} g++ PATHS ENV PATH NO_DEFAULT_PATH)
+project(Robot)
 
 # --- Fetch FTXUI --------------------------------------------------------------
 include(FetchContent)
@@ -16,10 +20,6 @@ if(NOT ftxui_POPULATED)
 endif()
 
 # ------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.10)
-find_program(CMAKE_C_COMPILER NAMES $ENV{CC} gcc PATHS ENV PATH NO_DEFAULT_PATH)
-find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} g++ PATHS ENV PATH NO_DEFAULT_PATH)
-project(Robot)
 
 # Set the build directory to ./build
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
@@ -28,13 +28,16 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
 # Collect all .cpp files in the src/ directory
-file(GLOB_RECURSE SOURCES ${SOURCE_DIR}/*.cpp)
+file(GLOB_RECURSE SOURCES 
+${SOURCE_DIR}/screentest.cpp
+${SOURCE_DIR}/main.cpp)
 
 # Add an executable with the collected sources
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(Robot PRIVATE src)
 
 target_link_libraries(Robot
+  PRIVATE ftxui::screen
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component # Not needed for this example.

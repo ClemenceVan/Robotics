@@ -2,18 +2,9 @@
 
 // #include <sys/socket.h>
 // #include <netinet/in.h>
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
-#else
 #include <unistd.h>
-#endif
 #include <iostream>
 #include <cmath>
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 // #include <Eigen/Dense>
 
@@ -158,8 +149,6 @@
 #include <string>
 #include <vector>
 
-#include "./include.hpp"
-
 int alpha, beta = 0;
 int _gamma = (-90 * M_PI / 180)/4;
 double start_x = 13.5; // to be changed when start
@@ -185,8 +174,8 @@ float calculate_median( std::vector<double> list){
 }
 
 void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::vector<float> position*/) {
-    //float ddx, ddy, dda = 0;
-    int max_iterations = 10;
+    float ddx, ddy, dda = 0;
+    int max_iterations = 1;
 
     Eigen::Matrix<double, 4, 2> unit_vectors;
     std::vector<double> line_distances;
@@ -217,13 +206,12 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
     Eigen::MatrixXd all_vi(positionMatrix.rows(), 2);
     for(int i = 0; i < max_iterations; i++) {
         Xs = RMatrix * positionMatrix.transpose();
-        //std::cout << RMatrix << std::endl;
+        std::cout << RMatrix << std::endl;
         // std::cout << positionMatrix << std::endl;
         Xwt = (CMatrix * Xs).transpose();
     
         all_vi = Xwt.block(0, 0, Xwt.rows(), 2);
-        
-/*
+
         // connect all points to a line in these loops below
         for(int j = 0; j < all_vi.rows(); j++) //loop throguh all lidar points
         {
@@ -247,9 +235,8 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
             assigned_line_index[j] = closest_line_index;
             squared_dists[j] = min_dist * min_dist;
             all_yi[j] = true_min_dist;
-        }*/
+        }
 
-        /*
         // update unitvectors list, so they follow the order of the assigned lines to each point
         Eigen::MatrixXd new_unitvectors(assigned_line_index.size(), 2);
         for (int j = 0; j < assigned_line_index.size(); j++)
@@ -306,45 +293,30 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         // create b matrix, which contains the correction of the position:
         Eigen::MatrixXd b;
         b = (A.transpose() * A).inverse() * A.transpose() * all_yi_eigen;
-        //std::cout << b << std::endl;
+        std::cout << b << std::endl;
 
-        //update "overall congurnce" (how far it is from the original position of robot? :-) :-S):
+        //update "overall congurnce" (how far it is from the original position of robot? :-) :-S ):
         ddx = ddx + b(0);
         ddy = ddy + b(1);
         dda = dda + b(2);
 
         // update robot position:
         start_x = start_x + b(0);
-        start_y = start_y + b(1);
-        start_angle = fmod(start_angle + b(2), 2*M_PI); // need modulus 2*pi here maybe ? 
+        start_y = start_x + b(1);
+        start_angle = start_x + b(2);
 
-        // covariance matrix calculations (uncertainty): 
+        // covaraince matrix calculations: 
         int n = A.rows();
         float s2 = (all_yi_eigen-A*b).transpose().dot(all_yi_eigen -A*b) / (n-4);
-        //std::cout << s2 << std::endl;
+        std::cout << s2 << std::endl;
         Eigen::MatrixXd covariance_matrix; 
         covariance_matrix = s2 * (A.transpose() * A).inverse();
-        //std::cout << covariance_matrix << std::endl;
+        std::cout << covariance_matrix << std::endl;
 
-        //check if the process has converged
-        //std::cout << "convergeance number = " << sqrt(pow(b(0),2) + pow(b(1),2)) << std::endl;
-        if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.3 ) // && abs(b(2)) < 0.1 * M_PI / 180
-        {
-            std::cout << "converged at iteration: " << i << std::endl;
-            std::cout << "converged at robot position: Rx = " << start_x << ", Ry = " << start_y << ", Ra = " << start_angle << std::endl;
-           // std::cout << "all_vi after converged: "<< all_vi_updated << std::endl;
-            screen(positionMatrix,all_vi);   
-            return;
-        }
-        */
     }
-
-     
-    std::cout << "did not converge, iterated all loops of cox" << std::endl;
-    screen(positionMatrix,all_vi); 
 }
 
-int main(void) {
+int main() {
     std::ifstream data ("./testfile90.txt");
     std::vector<int> buffer;
     // Eigen::matrix<double, 
@@ -366,7 +338,7 @@ int main(void) {
 
     if (!data.is_open()) throw std::runtime_error("Could not open file");
 
-
+    // positionMatrix.resize() should maybe be here to get correct values of position matrix? 
     int certainty, angle, distance;
     while (data >> certainty >> angle >> distance) {
         // m(lines, 0) = a;
@@ -375,16 +347,13 @@ int main(void) {
         // m(m.rows() - 1, 0) = M_PI * angle / 180;
         // m(m.rows() - 1, 1) = distance;
 
-        float angles_rad = fmod((-angle *(M_PI / 180)),2*M_PI);
+        float angles_rad = -(angle *(M_PI / 180));
         positionMatrix(positionMatrix.rows() - 1, 0) = distance * cos(angles_rad) / 10;
         positionMatrix(positionMatrix.rows() - 1, 1) = distance * sin(angles_rad) / 10;
         positionMatrix(positionMatrix.rows() - 1, 2) = 1;
         // std::cout << m(m.rows() - 1, 0) << " " << m(m.rows() - 1, 1) << std::endl;
         // std::cout << m << std::endl << std::endl;
     }
-
-    std::cout << positionMatrix << std::endl;
-    //screen(positionMatrix);
     // std::cout << "Matrix size " << m.rows() << " " << m.cols() << std::endl;
     // for (int c = 0; c < 5; c++) {
     //     for (int r = 0; r < 3; r++) {

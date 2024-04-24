@@ -1,39 +1,85 @@
+// Copyright 2020 Arthur Sonzogni. All rights reserved.
+// Use of this source code is governed by the MIT license that can be found in
+// the LICENSE file.
+#include <stdio.h>                 // for getchar
+#include <cmath>                   // for cos
+#include <ftxui/dom/elements.hpp>  // for Fit, canvas, operator|, border, Element
+#include <ftxui/screen/screen.hpp>  // for Pixel, Screen
+#include <vector>                   // for vector, allocator
 #include <iostream>
 
-#include "ftxui/dom/elements.hpp"
-#include "ftxui/screen/screen.hpp"
-#include "ftxui/screen/string.hpp"
+#include "ftxui/dom/canvas.hpp"  // for Canvas
+#include "ftxui/dom/node.hpp"    // for Render
+#include "ftxui/screen/color.hpp"  // for Color, Color::Red, Color::Blue, Color::Green, ftxui
 
-int screen(void) {
-  using namespace ftxui;
+#include "../Eigen/Dense"
+/*
+class Display {
+    int CanvasWidth = 100;
+    int CanvasHeight = 100;
 
-  auto summary = [&] {
-    auto content = vbox({
-        hbox({text(L"- done:   "), text(L"3") | bold}) | color(Color::Green),
-        hbox({text(L"- active: "), text(L"2") | bold}) | color(Color::RedLight),
-        hbox({text(L"- queue:  "), text(L"9") | bold}) | color(Color::Red),
-    });
-    return window(text(L" Summary "), content);
-  };
+    //// Move to include /////
+    int width = 27;
+    int height = 57;
 
-  auto document =  //
-      vbox({
-          hbox({
-              summary(),
-              summary(),
-              summary() | flex,
-          }),
-          summary(),
-          summary(),
-      });
+    double start_x = 13.5; // to be changed when start
+    double start_y = 10.5; // to be changed when start
+    //////////////////
 
-  // Limit the size of the document to 80 char.
-  document = document | size(WIDTH, LESS_THAN, 80);
+    ftxui::Canvas c;
+    Display() {
 
-  auto screen = Screen::Create(Dimension::Full(), Dimension::Fit(document));
-  Render(screen, document);
+        c = ftxui::Canvas(CanvasWidth, CanvasHeight);
+        int CenterPointX = CanvasWidth/2;
+        int CenterPointY = CanvasHeight/2;
 
-  std::cout << screen.ToString() << '\0' << std::endl;
+        for (int i = 0; i < line_model.rows(); i++)
+            c.DrawPointLine(xx + line_model(i,0), yy + line_model(i,1), line_model(i, 2) + xx, line_model(i, 3) + yy, Color::Red);
+    }
+};*/
 
-  return EXIT_SUCCESS;
+int screen(Eigen::MatrixXd positions, Eigen::MatrixXd new_positions) {
+    using namespace ftxui;
+
+    int CanvasWidth = 100;
+    int CanvasHeight = 100;
+
+    int width = 27;
+    int height = 57;
+
+    double start_x = 13.5; // to be changed when start
+    double start_y = 10.5; // to be changed when start
+
+    auto c = Canvas(100, 100);
+
+    int CenterPointX = CanvasWidth/2;
+    int CenterPointY = CanvasHeight/2;
+
+
+    Eigen::MatrixXi line_model(4,4);
+    line_model <<  0, 0, 0, height,
+                0, 0, width, 0,
+                0, height, width, height,
+                width, 0, width, height;
+    
+    int xx = CenterPointX - width/2;
+    int yy = CenterPointY - height/2;
+    
+    for (int i = 0; i < line_model.rows(); i++)
+        c.DrawPointLine(xx + line_model(i,0), yy + line_model(i,1), line_model(i, 2) + xx, line_model(i, 3) + yy, Color::Red);
+    
+    for (int i = 0; i < positions.rows(); i++)
+        c.DrawPoint(CenterPointX - positions(i, 0) + width/2 - start_x, CenterPointY - positions(i, 1) + height/2 - start_y, true, Color::Blue);
+    
+    for (int i = 0; i < new_positions.rows(); i++)
+        c.DrawPoint(CenterPointX - new_positions(i, 0) + width/2 - start_x, CenterPointY - new_positions(i, 1) + height/2 - start_y, true, Color::Green);
+
+    auto document = canvas(&c) | border;
+
+    auto screen = Screen::Create(Dimension::Fit(document));
+    Render(screen, document);
+    screen.Print();
+    getchar();
+
+    return 0;
 }
