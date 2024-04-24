@@ -150,7 +150,7 @@
 
 
 int alpha, beta = 0;
-int gamma = (-90 * M_PI / 180)/4;
+double gamma = (-90 * M_PI / 180)/4;
 double start_x = 13.5; // to be changed when start
 double start_y = 10.5; // to be changed when start
 int start_angle = 0;
