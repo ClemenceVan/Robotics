@@ -1,8 +1,9 @@
-#include "../Eigen/Dense"
+#include "./Eigen/Dense"
 
 // #include <sys/socket.h>
 // #include <netinet/in.h>
-#include <unistd.h> // Include POSIX headers
+#include <unistd.h>
+#include <iostream>
 #include <cmath>
 
 // #include <Eigen/Dense>
@@ -150,7 +151,7 @@
 
 
 int alpha, beta = 0;
-double gamma = (-90 * M_PI / 180)/4;
+int gamma = (-90 * M_PI / 180)/4;
 double start_x = 13.5; // to be changed when start
 double start_y = 10.5; // to be changed when start
 int start_angle = 0;
@@ -239,86 +240,110 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         //      std::cout << assigned_line_index[a] << std::endl;
 
        
-
+        // update unitvectors list, so they follow the order of the assigned lines to each point
         Eigen::MatrixXd new_unitvectors(assigned_line_index.size(), 2);
         for (int j = 0; j < assigned_line_index.size(); j++)
         {
             new_unitvectors.row(j) = unit_vectors.row(assigned_line_index[j]);
         }
-       // std::cout << new_unitvectors << std::endl;
+       //std::cout << new_unitvectors << std::endl;
 
-        // find median of squared distanses:
+        // find median of squared distances:
         float median = calculate_median(squared_dists);
         std::cout << "median" << median << std::endl;
 
-        std::vector<double> all_yi_updated;
-       
-        Eigen::MatrixXd all_vi_updated;
-        Eigen::MatrixXd unit_vectors_updated(0, 2);
 
-        // store index of outliers in remove_list
+        std::vector<double> all_yi_updated;
+        Eigen::VectorXd all_yi_eigen(0);
+        Eigen::MatrixXd all_vi_updated(0,2);
+        Eigen::MatrixXd unit_vectors_updated(0,2);
+        // remove all outliers, which is all points which have a distance above the median to the closest line:
         for (int j = 0; j < squared_dists.size(); j++)
         {
             if (squared_dists[j] <= median) // if not an outlier, add them to new lists
             {
                 // update unitvectors
                 unit_vectors_updated.conservativeResize(unit_vectors_updated.rows() + 1, 2);
-                unit_vectors_updated(unit_vectors_updated.rows() - 1, 0) = new_unitvectors(j);
+                unit_vectors_updated(unit_vectors_updated.rows() - 1,0) = new_unitvectors(j,0);
+                unit_vectors_updated(unit_vectors_updated.rows() - 1,1) = new_unitvectors(j,1);
                 // update sensor coordinates (all_vi)
                 all_vi_updated.conservativeResize(all_vi_updated.rows() + 1, 2);
-                all_vi_updated(all_vi_updated.rows()-1,0) = all_vi(j);
+                all_vi_updated(all_vi_updated.rows()-1,0) = all_vi(j,0);
+                all_vi_updated(all_vi_updated.rows()-1,1) = all_vi(j,1);
                 // update distances (yi)
+               // std::cout << "before" << std::endl;
                 all_yi_updated.push_back(all_yi[j]);
+                all_yi_eigen.conservativeResize(all_yi_eigen.rows()+1);
+                all_yi_eigen(all_yi_eigen.rows()-1) = all_yi[j];
+               // std::cout << "after" << std::endl;
             }
         }
-
-       //std::cout << unit_vectors_updated(1,0) << std::endl;
-
-        std::vector<double> unit_x(unit_vectors_updated.rows());
-        std::vector<double> unit_y(unit_vectors_updated.rows());
-        std::vector<double> unit_a(unit_vectors_updated.rows());
-
+        std::cout << all_yi_eigen << std::endl;
+       //std::cout << "yooo " << std::endl;
+        Eigen::MatrixXd A(unit_vectors_updated.rows(),3);
+        std::cout << "unit rows  " << unit_vectors_updated.rows()<< std::endl;
+       // A.resize(unit_vectors_updated.rows(), 3); // is this allocating memory? 
+        std::cout << "yeehaw" << std::endl;
         Eigen::Matrix2d rotation(2,2);
         rotation << 0, -1,
                     1, 0;
          
-        Eigen::Vector2d Vm;
+        // current robot coordinates: 
+        Eigen::Vector2d Vm; 
         Vm << start_x,start_y;
-
+       //std::cout << unit_vectors_updated << std::endl;
+        // split unit vectors in x-coordinate, y-coordinate and angle
         for (int j = 0; j < unit_vectors_updated.rows(); j++) 
         {
-            unit_x.push_back(unit_vectors_updated(j,0));
-            unit_y.push_back( unit_vectors_updated(j, 1));
-            // std::cout << "unit_vectors_updated.row(j) : " << unit_vectors_updated.row(j) << std::endl;
-            // std::cout << " all_vi_updated.row(j).transpose() : " <<  all_vi_updated.row(j).transpose() << std::endl;
-            // std::cout << "vm : " <<  Vm.transpose() << std::endl;
-            // std::cout << "rotation: " << rotation << std::endl;
-            //std::cout << "test : " << all_vi_updated.row(j) - Vm.transpose() << std::endl;
-            std::cout << "test2: " << ((unit_vectors_updated.row(j) * rotation).dot( all_vi_updated.row(j) - Vm.transpose()))  << std::endl;
-            unit_a.push_back((unit_vectors_updated.row(j) * rotation).dot( all_vi_updated.row(j) - Vm.transpose()));
+            //A.conservativeResize(unit_vectors_updated.rows() + 1, 3);
+            A(j, 0) = unit_vectors_updated(j,0); // x coordinate
+            A(j, 1) = unit_vectors_updated(j,1); // y coordinate
+            
+            float a = (unit_vectors_updated.row(j) * rotation).dot( all_vi_updated.row(j) - Vm.transpose());
+            A(j, 2) = a; // angle 
+           // std::cout << a << std::endl;
         }
+      // std::cout << A << std::endl;
+  std::cout << "yeehaw2" << std::endl;
+       Eigen::MatrixXd b;
+        //Eigen::Map<Eigen::VectorXd> all_yi_eigen(all_yi_updated.data(), all_yi_updated.size());
+       std::cout << "rows: " <<((A.transpose() * A).inverse()).rows() << "cols:" << ((A.transpose() * A).inverse()).cols()<< std::endl;
+       std::cout <<"rows" << (A.transpose()).rows()  <<  "cols" << (A.transpose()).cols() << std::endl;
+       std::cout <<"rows" << all_yi_eigen.transpose().rows()  <<  "cols" << all_yi_eigen.transpose().cols() << std::endl;
+        std::cout << "rows: " <<(A.transpose() * A).inverse() << std::endl;
+       //std::cout <<  <<std::endl;
+       // std::cout << "yeehaw3" << std::endl;
+      b = (A.transpose() * A).inverse() * A.transpose() * all_yi_eigen;
+      std::cout << b << std::endl;
+
+      start_x = start_x + b(0);
+      start_y = start_x + b(1);
+      start_angle = start_x + b(2);
+      //std::cout << start_x << std::endl;
+        /*b = inv(A'*A)*A'*all_yi';
+
+    %varaince:
+    n = max(size(A));
+    S2 =(all_yi'-A*b)'*(all_yi'-A*b)/(n-4);
+    C = S2*inv(A'*A); % covariance matrix from cox article
 
 
-        /* for i = 1:length(lista_ui)
-        xi3(i) = lista_ui(i,:)*[0 -1;1 0]*(all_vi(i,:)-Vm)';
-         end*/
-       
+    % Step 4 Add latest contribution to the overall congruence
+    ddx = ddx + b(1); % b(1) = dx . rättning i x-led
+    ddy = ddy + b(2);
+    dda = dda + b(3);
+
+    %update robot position
+    Rx = Rx + b(1);
+    Ry = Ry + b(2);
+    Ra = Ra + b(3);*/
         
-        // unit_y = 
-        // unit_a = 
-        /* xi1 = lista_ui(:,1); % x coordinates
-    xi2 = lista_ui(:,2); % y coordinates
-    xi3 = []; % angle
-
-    Vm = [Rx Ry]; % current robot coordinates*/
-
-
         
     }
 }
 
 int main() {
-    std::ifstream data ("./testfile90.txt");
+    std::ifstream data ("testfile90.txt");
     std::vector<int> buffer;
     // Eigen::matrix<double, 
     // sensor coordinates to robot coordinates
@@ -339,6 +364,7 @@ int main() {
 
     if (!data.is_open()) throw std::runtime_error("Could not open file");
 
+    // positionMatrix.resize() should maybe be here to get correct values of position matrix? 
     int certainty, angle, distance;
     while (data >> certainty >> angle >> distance) {
         // m(lines, 0) = a;
