@@ -14,7 +14,7 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-
+#include <mutex>
 // #include <Eigen/Dense>
 
 #define PORT 9888
@@ -162,8 +162,8 @@
 
 int alpha, beta = 0;
 int _gamma = 0;//(-180 * M_PI / 180);
-double start_x = 13.5; // to be changed when start
-double start_y = 10.5; // to be changed when start
+double start_x = 149; // to be changed when start
+double start_y = 87.5; // to be changed when start
 double start_angle = 0;//90*M_PI / 180;
 double ddx = 0;
 double ddy = 0;
@@ -171,7 +171,8 @@ double dda = 0;
 Eigen::Matrix<double, 4, 4> line_model;
 Eigen::MatrixXd RMatrix(3, 3);
 Eigen::MatrixXd CMatrix(3, 3);
-Eigen::MatrixXd positionMatrix(0, 3);
+Eigen::MatrixXd positionMatrixPool(360, 3);
+Eigen::MatrixXd positionMatrix(360, 3);
 
 float calculate_median( std::vector<double> list){
       
@@ -185,7 +186,7 @@ float calculate_median( std::vector<double> list){
 }
 
 void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::vector<float> position*/) {
-    //float ddx, ddy, dda = 0;
+    ddx, ddy, dda = 0;
     int max_iterations = 10;
 
     Eigen::Matrix<double, 4, 2> unit_vectors;
@@ -208,6 +209,7 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         // std::cout << line_distances[i] << std::endl;
     }
     // std::cout <<std::endl << unit_vectors << std::endl<<std::endl;
+    //std::cout << "unit vectors:" << unit_vectors << std::endl;
     Eigen::MatrixXd temp(positionMatrix.rows(),3);
     Eigen::MatrixXd Xs(3, positionMatrix.rows());
     
@@ -272,6 +274,8 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
             new_unitvectors.row(j) = unit_vectors.row(assigned_line_index[j]);
         }
 
+        //std::cout << "unit vectors correspoind to dots: " << new_unitvectors << std::endl;
+
         // find median of squared distances:
         float median = calculate_median(squared_dists);
 
@@ -331,12 +335,13 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         ddx = ddx + b(0);
         ddy = ddy + b(1);
         dda = dda + b(2);
+            std::cout << "ddx = " << ddx << ", ddy = " << ddy << ", dda = " << dda << std::endl;
 
         // update robot position:
         start_x = start_x + b(0);
         start_y = start_y + b(1);
-        start_angle = fmod(start_angle + b(2), 2*M_PI); // need modulus 2*pi here maybe ? 
-
+        //start_angle = fmod(start_angle + b(2), 2*M_PI); // need modulus 2*pi here maybe ? 
+        start_angle = start_angle + b(2);
         // covariance matrix calculations (uncertainty): 
         int n = A.rows();
         float s2 = (all_yi_eigen-A*b).transpose().dot(all_yi_eigen -A*b) / (n-4);
@@ -346,11 +351,11 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         //std::cout << covariance_matrix << std::endl;
 
         //check if the process has converged
-        //std::cout << "convergeance number = " << sqrt(pow(b(0),2) + pow(b(1),2)) << std::endl;
 
  /**/
         if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) // && abs(b(2)) < 0.1 * M_PI / 180
         {
+        std::cout << "convergeance number = " << sqrt(pow(b(0),2) + pow(b(1),2)) << std::endl;
             std::cout << "converged at iteration: " << i << std::endl;
             std::cout << "robot position: Rx = " << start_x << ", Ry = " << start_y << ", Ra = " << start_angle << std::endl;
             std::cout << "ddx = " << ddx << ", ddy = " << ddy << ", dda = " << dda << std::endl;
@@ -367,8 +372,61 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
     
 }
 
+int lines = 0;
+std::mutex mtx;
+
+void data_thread() {
+    ssize_t valread;
+    char buffer2[1024] = {0};
+    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(PORT);
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    bind(serverSocket, (sockaddr *)&serverAddress, sizeof(serverAddress));
+    listen(serverSocket, 5);
+    int newSock = accept(serverSocket, NULL, NULL);
+    
+    while(true) {
+        // for(int count = 0; count < 360; count++) {
+            // Receive header
+            valread = read(newSock, buffer2, 5);
+            if (valread != 5) continue;//throw std::runtime_error("Could not read header");
+
+            // Parse header
+            if (buffer2[0] == (char)0xA5) {
+                unsigned int data_length = ((buffer2[2] << 16) | (buffer2[3] << 8) | buffer2[4]) & 0xFFFFFF;
+
+                // Receive data
+                valread = read(newSock, buffer2, data_length);
+                if (valread != data_length) break;
+
+                unsigned int angle = (((unsigned int)buffer2[1] >> 1) + (((unsigned int)buffer2[2]) << 7)) >> 6;
+                unsigned int distance = (((unsigned int)buffer2[3]) + (((unsigned int)buffer2[4]) << 8)) >> 2;
+                unsigned char quality = buffer2[0] >> 2;
+            float angles_rad = fmod((angle *(M_PI / 180)),2*M_PI);
+            // positionMatrix(positionMatrix.rows() - 1, 0) = distance * cos(angles_rad) / 10;
+            // positionMatrix(positionMatrix.rows() - 1, 1) = distance * sin(angles_rad) / 10;
+            // positionMatrix(positionMatrix.rows() - 1, 2) = 1;
+            if (lines == 359) {
+                positionMatrixPool = positionMatrixPool.block(1, 0, positionMatrixPool.rows() - 1, 3);
+                positionMatrixPool.conservativeResize(positionMatrixPool.rows() + 1, 3); // to be changed to fixed size so we don't have to resize
+                // std::cout << "matrix size " << positionMatrixPool.rows() << std::endl;
+            }
+            mtx.lock();
+            positionMatrixPool(lines, 0) = distance * cos(-angles_rad) / 10;
+            positionMatrixPool(lines, 1) = distance * sin(-angles_rad) / 10;
+            positionMatrixPool(lines, 2) = 1;
+            if (lines < 359) lines++;
+            mtx.unlock();
+        }
+    }
+}
+
+#include <thread>
+
 int main(void) {
-    std::ifstream data ("./newdata4.txt");
+    // std::ifstream data ("./newdata4.txt");
     std::vector<int> buffer;
     // Eigen::matrix<double, 
     // sensor coordinates to robot coordinates
@@ -381,46 +439,29 @@ int main(void) {
                 0, 0, 1;
 
     // line model to change if box changes
-    line_model <<  0, 0, 0, 57,
-                0, 57, 27, 57,
-                27, 57, 27, 0,
-                27, 0, 0, 0;
+    line_model <<  0, 0, 0, 365,
+                0, 365, 244, 365,
+                244, 365, 244, 0,
+                244, 0, 0, 0;
 
 
-    if (!data.is_open()) throw std::runtime_error("Could not open file");
+    // if (!data.is_open()) throw std::runtime_error("Could not open file");
+    std::thread data_th(data_thread);
+    data_th.detach();
+    // data_th.join();
+    // return 0;
+
+    while (lines < 359); // wait for first batch of data
 
 
-    int certainty, angle, distance;
-    while (data >> certainty >> angle >> distance) {
-        // m(lines, 0) = a;
-        positionMatrix.conservativeResize(positionMatrix.rows() + 1, 3);
-        // if (positionMatrix.rows() == 11) break;
-        // m(m.rows() - 1, 0) = M_PI * angle / 180;
-        // m(m.rows() - 1, 1) = distance;
-
-        float angles_rad = fmod((angle *(M_PI / 180)),2*M_PI);
-        positionMatrix(positionMatrix.rows() - 1, 0) = distance * cos(angles_rad) / 10;
-        positionMatrix(positionMatrix.rows() - 1, 1) = distance * sin(angles_rad) / 10;
-        positionMatrix(positionMatrix.rows() - 1, 2) = 1;
-        // std::cout << m(m.rows() - 1, 0) << " " << m(m.rows() - 1, 1) << std::endl;
-        // std::cout << m << std::endl << std::endl;
+    while (true) {
+        mtx.lock();
+        positionMatrix = positionMatrixPool; // copy the data from the pool to the matrix
+        //print last 5 lines of matrix
+        // std::cout << positionMatrixPool.block(positionMatrixPool.rows() - 5, 0, 5, 3) << std::endl;
+        mtx.unlock();
+        cox_linefit(); // run the cox linefit algorithm on the dynamic data
+        // for (int i = 0; i < 50000000; i++);
     }
-
-    //std::cout << positionMatrix << std::endl;
-    //screen(positionMatrix);
-    // std::cout << "Matrix size " << m.rows() << " " << m.cols() << std::endl;
-    // for (int c = 0; c < 5; c++) {
-    //     for (int r = 0; r < 3; r++) {
-    //         std::cout << positionMatrix(c,r) << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-    std::cout << "hellooo" << std::endl;
-
-    cox_linefit();
-
-    // for (long unsigned int i = 0; i < buffer.length(); i++) {
-
-    // }
 
 }
