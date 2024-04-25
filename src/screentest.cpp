@@ -41,19 +41,23 @@ class Display {
 int screen(Eigen::MatrixXd positions, Eigen::MatrixXd new_positions) {
     using namespace ftxui;
 
-    int CanvasWidth = 100;
-    int CanvasHeight = 100;
+    int CanvasWidth = 200;
+    int CanvasHeight = 200;
 
     int width = 27;
     int height = 57;
 
+
     double start_x = 13.5; // to be changed when start
     double start_y = 10.5; // to be changed when start
 
-    auto c = Canvas(100, 100);
+    auto c = Canvas(200, 200);
 
     int CenterPointX = CanvasWidth/2;
     int CenterPointY = CanvasHeight/2;
+
+    int rectStartX = CenterPointX - width / 2;
+    int rectStartY = CenterPointY + height / 2;
 
 
     Eigen::MatrixXi line_model(4,4);
@@ -61,19 +65,20 @@ int screen(Eigen::MatrixXd positions, Eigen::MatrixXd new_positions) {
                 0, 0, width, 0,
                 0, height, width, height,
                 width, 0, width, height;
-    
-    int xx = CenterPointX - width/2;
-    int yy = CenterPointY - height/2;
-    
-    for (int i = 0; i < line_model.rows(); i++)
-        c.DrawPointLine(xx + line_model(i,0), yy + line_model(i,1), line_model(i, 2) + xx, line_model(i, 3) + yy, Color::Red);
-    
-    for (int i = 0; i < positions.rows(); i++)
-        c.DrawPoint(CenterPointX - positions(i, 0) + width/2 - start_x, CenterPointY - positions(i, 1) + height/2 - start_y, true, Color::Blue);
-    
-    for (int i = 0; i < new_positions.rows(); i++)
-        c.DrawPoint(CenterPointX - new_positions(i, 0) + width/2 - start_x, CenterPointY - new_positions(i, 1) + height/2 - start_y, true, Color::Green);
 
+    // Adjust the coordinates of the line model based on the center point.
+ for (int i = 0; i < line_model.rows(); i++)
+    c.DrawPointLine(line_model(i, 0) + CenterPointX,
+                    line_model(i, 1) + CenterPointY,
+                    line_model(i, 2) + CenterPointX,
+                    line_model(i, 3) + CenterPointY, Color::Red);
+    // Adjust the coordinates of positions and new_positions based on the center point.
+
+for (int i = 0; i < positions.rows(); i++)
+    c.DrawPoint(positions(i, 0) + CenterPointX, positions(i, 1) + CenterPointY, true, Color::Blue);
+
+for (int i = 0; i < new_positions.rows(); i++)
+    c.DrawPoint(new_positions(i, 0) + CenterPointX, new_positions(i, 1) + CenterPointY, true, Color::Green);
     auto document = canvas(&c) | border;
 
     auto screen = Screen::Create(Dimension::Fit(document));

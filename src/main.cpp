@@ -161,10 +161,10 @@
 #include "./include.hpp"
 
 int alpha, beta = 0;
-int _gamma = (-90 * M_PI / 180)/4;
+int _gamma = (180 * M_PI / 180);
 double start_x = 13.5; // to be changed when start
 double start_y = 10.5; // to be changed when start
-int start_angle = 0;
+int start_angle = 90*M_PI / 180;
 double ddx = 0;
 double ddy = 0;
 double dda = 0;
@@ -208,22 +208,37 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         // std::cout << line_distances[i] << std::endl;
     }
     // std::cout <<std::endl << unit_vectors << std::endl<<std::endl;
-    
+    Eigen::MatrixXd temp(positionMatrix.rows(),3);
     Eigen::MatrixXd Xs(3, positionMatrix.rows());
+    
+    Eigen::MatrixXd Xw(3,positionMatrix.rows());
     Eigen::MatrixXd Xwt(positionMatrix.rows(), 3);
     std::vector<double> assigned_line_index(positionMatrix.rows(),0); // store all indexes of the lines that corresponds to points in this list
     std::vector<double> squared_dists(positionMatrix.rows(),0);
     std::vector<double> all_yi(positionMatrix.rows(),0); // store all shortest distances to each point in this list
     Eigen::MatrixXd all_vi(positionMatrix.rows(), 2);
+    
     for(int i = 0; i < max_iterations; i++) {
+        RMatrix <<  cos(_gamma), -sin(_gamma), alpha,
+                sin(_gamma), cos(_gamma), beta,
+                0, 0, 1;
+
+        CMatrix <<  cos(start_angle), -sin(start_angle), start_x,
+                sin(start_angle), cos(start_angle), start_y,
+                0, 0, 1;
+
         Xs = RMatrix * positionMatrix.transpose();
         //std::cout << RMatrix << std::endl;
-        // std::cout << positionMatrix << std::endl;
-        Xwt = (CMatrix * Xs).transpose();
-    
+      
+        Xw = (CMatrix * Xs);
+        Xwt =Xw.transpose();
+        //std::cout << Xwt << std::endl;
+        if(i == 0)
+            temp = Xwt;
+
         all_vi = Xwt.block(0, 0, Xwt.rows(), 2);
         
-/*
+
         // connect all points to a line in these loops below
         for(int j = 0; j < all_vi.rows(); j++) //loop throguh all lidar points
         {
@@ -247,9 +262,9 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
             assigned_line_index[j] = closest_line_index;
             squared_dists[j] = min_dist * min_dist;
             all_yi[j] = true_min_dist;
-        }*/
+        }
 
-        /*
+      
         // update unitvectors list, so they follow the order of the assigned lines to each point
         Eigen::MatrixXd new_unitvectors(assigned_line_index.size(), 2);
         for (int j = 0; j < assigned_line_index.size(); j++)
@@ -263,7 +278,7 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         Eigen::VectorXd all_yi_eigen(0);
         Eigen::MatrixXd all_vi_updated(0,2);
         Eigen::MatrixXd unit_vectors_updated(0,2);
-
+     
         // remove all outliers from the lists. The outliers are all points which have a distance above the median to the closest line:
         for (int j = 0; j < squared_dists.size(); j++)
         {
@@ -282,6 +297,8 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
                 all_yi_eigen(all_yi_eigen.rows()-1) = all_yi[j];
             }
         }
+        
+
      
         Eigen::MatrixXd A(unit_vectors_updated.rows(),3);
        // A.resize(unit_vectors_updated.rows(), 3); // is this allocating memory? 
@@ -306,6 +323,8 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         // create b matrix, which contains the correction of the position:
         Eigen::MatrixXd b;
         b = (A.transpose() * A).inverse() * A.transpose() * all_yi_eigen;
+
+
         //std::cout << b << std::endl;
 
         //update "overall congurnce" (how far it is from the original position of robot? :-) :-S):
@@ -328,20 +347,22 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
 
         //check if the process has converged
         //std::cout << "convergeance number = " << sqrt(pow(b(0),2) + pow(b(1),2)) << std::endl;
-        if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.3 ) // && abs(b(2)) < 0.1 * M_PI / 180
+
+ /**/
+        if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) // && abs(b(2)) < 0.1 * M_PI / 180
         {
             std::cout << "converged at iteration: " << i << std::endl;
             std::cout << "converged at robot position: Rx = " << start_x << ", Ry = " << start_y << ", Ra = " << start_angle << std::endl;
            // std::cout << "all_vi after converged: "<< all_vi_updated << std::endl;
-            screen(positionMatrix,all_vi);   
+            screen(temp,all_vi);   
             return;
         }
-        */
+   
     }
-
-     
+   
     std::cout << "did not converge, iterated all loops of cox" << std::endl;
-    screen(positionMatrix,all_vi); 
+    screen(temp,all_vi); 
+    
 }
 
 int main(void) {
@@ -375,7 +396,7 @@ int main(void) {
         // m(m.rows() - 1, 0) = M_PI * angle / 180;
         // m(m.rows() - 1, 1) = distance;
 
-        float angles_rad = fmod((-angle *(M_PI / 180)),2*M_PI);
+        float angles_rad = fmod((angle *(M_PI / 180)),2*M_PI);
         positionMatrix(positionMatrix.rows() - 1, 0) = distance * cos(angles_rad) / 10;
         positionMatrix(positionMatrix.rows() - 1, 1) = distance * sin(angles_rad) / 10;
         positionMatrix(positionMatrix.rows() - 1, 2) = 1;
@@ -383,7 +404,7 @@ int main(void) {
         // std::cout << m << std::endl << std::endl;
     }
 
-    std::cout << positionMatrix << std::endl;
+    //std::cout << positionMatrix << std::endl;
     //screen(positionMatrix);
     // std::cout << "Matrix size " << m.rows() << " " << m.cols() << std::endl;
     // for (int c = 0; c < 5; c++) {
