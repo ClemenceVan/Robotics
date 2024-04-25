@@ -161,10 +161,10 @@
 #include "./include.hpp"
 
 int alpha, beta = 0;
-int _gamma = (180 * M_PI / 180);
+int _gamma = 0;//(-180 * M_PI / 180);
 double start_x = 13.5; // to be changed when start
 double start_y = 10.5; // to be changed when start
-int start_angle = 90*M_PI / 180;
+double start_angle = 0;//90*M_PI / 180;
 double ddx = 0;
 double ddy = 0;
 double dda = 0;
@@ -352,9 +352,11 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) // && abs(b(2)) < 0.1 * M_PI / 180
         {
             std::cout << "converged at iteration: " << i << std::endl;
-            std::cout << "converged at robot position: Rx = " << start_x << ", Ry = " << start_y << ", Ra = " << start_angle << std::endl;
+            std::cout << "robot position: Rx = " << start_x << ", Ry = " << start_y << ", Ra = " << start_angle << std::endl;
+            std::cout << "ddx = " << ddx << ", ddy = " << ddy << ", dda = " << dda << std::endl;
+            std::cout << "covariance matrix: " << covariance_matrix << std::endl;
            // std::cout << "all_vi after converged: "<< all_vi_updated << std::endl;
-            screen(temp,all_vi);   
+            screen(temp,all_vi_updated);   
             return;
         }
    
@@ -366,7 +368,7 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
 }
 
 int main(void) {
-    std::ifstream data ("./testfile90.txt");
+    std::ifstream data ("./newdata4.txt");
     std::vector<int> buffer;
     // Eigen::matrix<double, 
     // sensor coordinates to robot coordinates
