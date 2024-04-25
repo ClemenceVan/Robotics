@@ -28,16 +28,19 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
 # Collect all .cpp files in the src/ directory
-file(GLOB_RECURSE SOURCES 
-${SOURCE_DIR}/screentest.cpp
-${SOURCE_DIR}/main.cpp)
+file(GLOB_RECURSE SOURCES ${SOURCE_DIR}/main.cpp)
 
 # Add an executable with the collected sources
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_include_directories(Robot PRIVATE src)
 
-target_link_libraries(Robot
-  PRIVATE ftxui::screen
+# Include libraries from the ./libraries directory
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/libraries)
+
+# Link libraries from the ./libraries directory
+# target_link_libraries(${PROJECT_NAME} PRIVATE Eigen)
+
+# Link with ftxui libraries
+target_link_libraries(${PROJECT_NAME}
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component # Not needed for this example.
@@ -52,8 +55,6 @@ if (EMSCRIPTEN)
     configure_file("src/${file}" ${file})
   endforeach(file)
 endif()
-
-
 
 # Move the compiled binary to the root directory
 set_target_properties(${PROJECT_NAME} PROPERTIES

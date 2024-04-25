@@ -157,7 +157,7 @@ int start_angle = 0;
 double ddx = 0;
 double ddy = 0;
 double dda = 0;
-Eigen::Matrix<double, 4, 4> line_model;
+// Eigen::Matrix<double, 4, 4> line_model;
 Eigen::MatrixXd RMatrix(3, 3);
 Eigen::MatrixXd CMatrix(3, 3);
 Eigen::MatrixXd positionMatrix(0, 3);
