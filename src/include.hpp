@@ -21,3 +21,10 @@ int screen(Eigen::MatrixXd positions, Eigen::MatrixXd new_positions);
 #ifdef _WIN32
     #define close closesocket
 #endif
+
+// #ifndef _POSITIONS_
+//     double start_x = 14; // to be changed when start
+//     double start_y = 29; // to be changed when start
+//     double start_angle = 0;//90*M_PI / 180;
+// #define _POSITIONS_
+// #endif

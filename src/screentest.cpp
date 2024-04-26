@@ -13,6 +13,7 @@
 #include "ftxui/screen/color.hpp"  // for Color, Color::Red, Color::Blue, Color::Green, ftxui
 
 #include "../Eigen/Dense"
+
 /*
 class Display {
     int CanvasWidth = 100;
@@ -42,15 +43,19 @@ int screen(Eigen::MatrixXd positions, Eigen::MatrixXd new_positions) {
     using namespace ftxui;
 
     int CanvasWidth = 150;
-    int CanvasHeight = 100;
-    int scale = 3;
+    int CanvasHeight = 90;
+    int scale = 1;
 
-    int width = 244 / scale;
-    int height = 365 / scale;
+    int width = 27;
+    int height = 57;
 
 
-    double start_x = 149; // to be changed when start
-    double start_y = 87.5; // to be changed when start
+    // double original_x = start_x; // to be changed when start
+    // double original_y = start_y; // to be changed when start
+    
+    double start_x = 14; // to be changed when start
+    double start_y = 29; // to be changed when start
+    double start_angle = 0;//90*M_PI / 180;
 
     auto c = Canvas(150, 100);
 
@@ -81,6 +86,10 @@ for (int i = 0; i < positions.rows(); i++)
 for (int i = 0; i < new_positions.rows(); i++)
     c.DrawPoint((new_positions(i, 0) + CenterPointX) / scale, (new_positions(i, 1) + CenterPointY) / scale, true, Color::Green);
     auto document = canvas(&c) | border;
+
+//print radar pos
+// c.DrawPoint(original_x, original_x, true, Color::Red);
+// c.DrawPoint(start_x, start_y, true, Color::Red);
 
     auto screen = Screen::Create(Dimension::Fit(document));
     Render(screen, document);

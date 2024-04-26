@@ -161,10 +161,10 @@
 #include "./include.hpp"
 
 int alpha, beta = 0;
-int _gamma = 0;//(-180 * M_PI / 180);
-double start_x = 149; // to be changed when start
-double start_y = 87.5; // to be changed when start
-double start_angle = 0;//90*M_PI / 180;
+int _gamma = 0;//(-90 * M_PI / 180);
+    double start_x = 14; // to be changed when start
+    double start_y = 29; // to be changed when start
+    double start_angle = 0;//90*M_PI / 180;
 double ddx = 0;
 double ddy = 0;
 double dda = 0;
@@ -335,7 +335,7 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
         ddx = ddx + b(0);
         ddy = ddy + b(1);
         dda = dda + b(2);
-            std::cout << "ddx = " << ddx << ", ddy = " << ddy << ", dda = " << dda << std::endl;
+            // std::cout << "ddx = " << ddx << ", ddy = " << ddy << ", dda = " << dda << std::endl;
 
         // update robot position:
         start_x = start_x + b(0);
@@ -355,11 +355,11 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
  /**/
         if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) // && abs(b(2)) < 0.1 * M_PI / 180
         {
-        std::cout << "convergeance number = " << sqrt(pow(b(0),2) + pow(b(1),2)) << std::endl;
-            std::cout << "converged at iteration: " << i << std::endl;
-            std::cout << "robot position: Rx = " << start_x << ", Ry = " << start_y << ", Ra = " << start_angle << std::endl;
-            std::cout << "ddx = " << ddx << ", ddy = " << ddy << ", dda = " << dda << std::endl;
-            std::cout << "covariance matrix: " << covariance_matrix << std::endl;
+        // std::cout << "convergeance number = " << sqrt(pow(b(0),2) + pow(b(1),2)) << std::endl;
+            // std::cout << "converged at iteration: " << i << std::endl;
+            // std::cout << "ddx = " << ddx << ", ddy = " << ddy << ", dda = " << dda << std::endl;
+            std::cout << "robot position: Rx = " << start_x - 14 << ", Ry = " << start_y - 29 << ", Ra = " << start_angle * 180 / M_PI << std::endl;
+            // std::cout << "covariance matrix: " << covariance_matrix << std::endl;
            // std::cout << "all_vi after converged: "<< all_vi_updated << std::endl;
             screen(temp,all_vi_updated);   
             return;
@@ -368,6 +368,7 @@ void cox_linefit(/*std::vector<float> angle, std::vector<float> distance, std::v
     }
    
     std::cout << "did not converge, iterated all loops of cox" << std::endl;
+            std::cout << "robot position: Rx = " << start_x - 14 << ", Ry = " << start_y - 29 << ", Ra = " << start_angle * 180 / M_PI << std::endl;
     screen(temp,all_vi); 
     
 }
@@ -391,7 +392,7 @@ void data_thread() {
         // for(int count = 0; count < 360; count++) {
             // Receive header
             valread = read(newSock, buffer2, 5);
-            if (valread != 5) continue;//throw std::runtime_error("Could not read header");
+            if (valread != 5) throw std::runtime_error("Could not read header");
 
             // Parse header
             if (buffer2[0] == (char)0xA5) {
@@ -404,21 +405,27 @@ void data_thread() {
                 unsigned int angle = (((unsigned int)buffer2[1] >> 1) + (((unsigned int)buffer2[2]) << 7)) >> 6;
                 unsigned int distance = (((unsigned int)buffer2[3]) + (((unsigned int)buffer2[4]) << 8)) >> 2;
                 unsigned char quality = buffer2[0] >> 2;
+                if (quality < 10 || distance == 0) continue;
+                // std::cout << static_cast<int>(quality) << " " << angle << " " << distance << std::endl;
             float angles_rad = fmod((angle *(M_PI / 180)),2*M_PI);
             // positionMatrix(positionMatrix.rows() - 1, 0) = distance * cos(angles_rad) / 10;
             // positionMatrix(positionMatrix.rows() - 1, 1) = distance * sin(angles_rad) / 10;
             // positionMatrix(positionMatrix.rows() - 1, 2) = 1;
+            mtx.lock();
             if (lines == 359) {
-                positionMatrixPool = positionMatrixPool.block(1, 0, positionMatrixPool.rows() - 1, 3);
-                positionMatrixPool.conservativeResize(positionMatrixPool.rows() + 1, 3); // to be changed to fixed size so we don't have to resize
+                // std::cout << "matrix size before " << positionMatrixPool.rows() << std::endl;
+                // positionMatrixPool = positionMatrixPool.block(1, 0, positionMatrixPool.rows() - 1, 3);
+                positionMatrixPool.block(0, 0, positionMatrixPool.rows() - 1, 3) = positionMatrixPool.block(1, 0, positionMatrixPool.rows() - 1, 3);
+                // positionMatrixPool.conservativeResize(positionMatrixPool.rows() + 1, 3); // to be changed to fixed size so we don't have to resize
                 // std::cout << "matrix size " << positionMatrixPool.rows() << std::endl;
             }
-            mtx.lock();
             positionMatrixPool(lines, 0) = distance * cos(-angles_rad) / 10;
             positionMatrixPool(lines, 1) = distance * sin(-angles_rad) / 10;
             positionMatrixPool(lines, 2) = 1;
             if (lines < 359) lines++;
             mtx.unlock();
+        } else {
+            throw std::runtime_error("Invalid header");
         }
     }
 }
@@ -439,10 +446,10 @@ int main(void) {
                 0, 0, 1;
 
     // line model to change if box changes
-    line_model <<  0, 0, 0, 365,
-                0, 365, 244, 365,
-                244, 365, 244, 0,
-                244, 0, 0, 0;
+    line_model <<  0, 0, 0, 57,
+                0, 57, 27, 57,
+                27, 57, 27, 0,
+                27, 0, 0, 0;
 
 
     // if (!data.is_open()) throw std::runtime_error("Could not open file");
@@ -461,7 +468,7 @@ int main(void) {
         // std::cout << positionMatrixPool.block(positionMatrixPool.rows() - 5, 0, 5, 3) << std::endl;
         mtx.unlock();
         cox_linefit(); // run the cox linefit algorithm on the dynamic data
-        // for (int i = 0; i < 50000000; i++);
+        sleep(1); // sleep for 1 second
     }
 
 }
