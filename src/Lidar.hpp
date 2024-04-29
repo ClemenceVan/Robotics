@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include "asio/include/asio.hpp"
 
+#include <thread>
+
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
@@ -39,135 +41,33 @@ class Lidar {
     Display *display;
 
     bool _isPooling = false;
-    char buffer[1024] = {0};
-    ssize_t valread;
-    SOCKET serverSocket;
-    SOCKET newSock;
-
-    
-    asio::io_service ioService;
+    asio::io_context io_context;
     asio::ip::tcp::acceptor acceptor;
     asio::ip::tcp::socket socket;
 
     public:
-    Lidar(int width = 27, int height = 57, bool display = true, std::string path = ""):
-        acceptor(this->ioService, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), PORT)), socket(this->ioService),
-        width(width), height(height) {
-        this->RMatrix << cos(alpha), -sin(alpha), 0,
-                    sin(alpha), cos(alpha), 0,
-                    0, 0, 1;
-                
-        this->CMatrix << cos(beta), 0, sin(beta),
-                    0, 1, 0,
-                    -sin(beta), 0, cos(beta);
-
-        this->line_model <<  0, 0, 0, height,
-                    0, 0, width, 0,
-                    0, height, width, height,
-                    width, 0, width, height;
-
-        if (display) this->display = new Display(60, 60, line_model);
-        if (path != "") {
-            data.open(path);
-            if (!data.is_open()) throw std::runtime_error("Could not open file");
-        } else {
-            // serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-            // sockaddr_in serverAddress;
-            // serverAddress.sin_family = AF_INET;
-            // serverAddress.sin_port = htons(PORT);
-            // serverAddress.sin_addr.s_addr = INADDR_ANY;
-            // bind(serverSocket, (sockaddr *)&serverAddress, sizeof(serverAddress));
-            // listen(serverSocket, 5);
-            // std::cout << "Listening on port " << PORT << std::endl;
-            // newSock = accept(serverSocket, NULL, NULL);
-            // std::cout << "Connected to client " << newSock << std::endl;
-            // _isPooling = true;
-            
-    
-
-            // acceptor.async_accept(socket, [this](std::error_code ec) {
-            // if (!ec) {
-            //     std::cout << "Connected to client" << std::endl;
-            //     _isPooling = true;
-            // } else {
-            //     std::cerr << "Accept error: " << ec.message() << std::endl;
-            // }});
-            acceptor.accept(socket);
-            std::cout << "Connected to client" << std::endl;
-            _isPooling = true;
-                // socket.async_read_some(asio::buffer(buffer, sizeof(buffer)),
-                //                 [this](std::error_code ec, std::size_t length) {
-                // if (!ec) {
-                //     // Process received data here
-                //     std::cout << "Received data: " << std::string(buffer, length) << std::endl;
-                // } else {
-                //     std::cerr << "Read error: " << ec.message() << std::endl;
-                //     _isPooling = false;
-                //     socket.close();
-                // }});
-        }
+    Lidar(int width = 27, int height = 57, bool display = true, std::string path = "")
+        : width(width), height(height), acceptor(io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), 9888)), socket(io_context) {
+        acceptor.accept(this->socket);
+        std::cout << "New connection from: " << this->socket.remote_endpoint().address().to_string() << std::endl;
     }
 
     ~Lidar() {
         if (data.is_open()) data.close();
         if (_isPooling) {
-            close(newSock);
-            close(serverSocket);
+            this->socket.close();
         }
     }
 
     void poolLidarData() {
-        
-        // socket.read_some(asio::buffer(buffer, sizeof(buffer)));
-        // std::cout << "Received data: " << std::string(buffer) << std::endl;
-        std::array<char, 128> buffer;
-        asio::error_code error;
-        asio::streambuf response;
-        // size_t length = socket.read_some(asio::buffer(buffer), error);
-        size_t length = asio::read_until(socket, response, '\n', error);
-        if (error == asio::error::eof) {
-            std::cout << "Connection closed by peer" << std::endl;
-        } else if (error) {
-            throw asio::system_error(error);
+        asio::streambuf buffer;
+
+        while (asio::read_until(socket, buffer, '\n')) {
+            std::istream input_stream(&buffer);
+            std::string line;
+            std::getline(input_stream, line);
+            std::cout << "Received: " << line << std::endl;
         }
-        // std::cout << "Received data: " << buffer.data() << std::endl;
-        std::cout << "Received data: " << asio::buffer_cast<const char*>(response.data()) << std::endl;
-        // read_until(asio::buffer(buffer, sizeof(buffer)), '\n');
-
-        // if (!_isPooling) return;
-        // valread = recv(newSock, buffer, 5, 0);
-        // if (valread != 5) return;
-
-        // // Parse header
-        // if (buffer[0] == (char)0xA5) {
-        //     unsigned int data_length = ((buffer[2] << 16) | (buffer[3] << 8) | buffer[4]) & 0xFFFFFF;
-
-        //     // Receive data
-        //     valread = recv(newSock, buffer, data_length, 0);
-        //     if (valread != data_length) return;
-
-        //     unsigned int angle = (((unsigned int)buffer[1] >> 1) + (((unsigned int)buffer[2]) << 7)) >> 6;
-        //     unsigned int distance = (((unsigned int)buffer[3]) + (((unsigned int)buffer[4]) << 8)) >> 2;
-        //     unsigned char quality = buffer[0] >> 2;
-
-        //     std::cout << static_cast<int>(quality) << " " << angle << " " << distance << std::endl;
-
-        //     int angles_rad = M_PI * angle / 180;
-
-        //     // float x = distance * cos(angles_rad);
-        //     // float y = distance * sin(angles_rad);
-        //     //std::cout << static_cast<int>(quality) << " " << angle << " " << distance << " " << x << " " << y << std::endl;
-            
-        //     // m(0, 0) = cos();
-        //     // m(0, 1) = -sin();
-        //     // m(0, 2) = x;//S alpha
-        //     // m(1, 0) = sin();//_gamma
-        //     // m(1, 1) = cos();//_gamma
-        //     // m(1, 2) = y;// beta
-        //     // m(2, 0) = 0;
-        //     // m(2, 1) = 0;
-        //     // m(2, 2) = 1;
-        // }
     }
 
     void populatePositionMatrix() {

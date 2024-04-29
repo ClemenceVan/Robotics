@@ -3,3 +3,4 @@
 *.sln
 *.vscode
 *build
+*Debug*

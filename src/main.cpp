@@ -352,65 +352,10 @@ int main(void) {
     // lidar.cox_linefit();
 
     Lidar lidar(27, 57);
+    lidar.poolLidarData();
     while (true) {
-        lidar.poolLidarData();
     }
 
-
-    // std::ifstream data ("./testfile90.txt");
-    // std::vector<int> buffer;
-    // // Eigen::matrix<double, 
-    // // sensor coordinates to robot coordinates
-    // RMatrix <<  cos(_gamma), -sin(_gamma), alpha,
-    //             sin(_gamma), cos(_gamma), beta,
-    //             0, 0, 1;
-    // // robot to world coordinates
-    // CMatrix <<  cos(start_angle), -sin(start_angle), start_x,
-    //             sin(start_angle), cos(start_angle), start_y,
-    //             0, 0, 1;
-
-    // // line model to change if box changes
-    // line_model <<  0, 0, 0, 57,
-    //             0, 57, 27, 57,
-    //             27, 57, 27, 0,
-    //             27, 0, 0, 0;
-
-
-    // if (!data.is_open()) throw std::runtime_error("Could not open file");
-
-
-    // int certainty, angle, distance;
-    // while (data >> certainty >> angle >> distance) {
-    //     // m(lines, 0) = a;
-    //     positionMatrix.conservativeResize(positionMatrix.rows() + 1, 3);
-    //     // if (positionMatrix.rows() == 11) break;
-    //     // m(m.rows() - 1, 0) = M_PI * angle / 180;
-    //     // m(m.rows() - 1, 1) = distance;
-
-    //     float angles_rad = fmod((-angle *(M_PI / 180)),2*M_PI);
-    //     positionMatrix(positionMatrix.rows() - 1, 0) = distance * cos(angles_rad) / 10;
-    //     positionMatrix(positionMatrix.rows() - 1, 1) = distance * sin(angles_rad) / 10;
-    //     positionMatrix(positionMatrix.rows() - 1, 2) = 1;
-    //     // std::cout << m(m.rows() - 1, 0) << " " << m(m.rows() - 1, 1) << std::endl;
-    //     // std::cout << m << std::endl << std::endl;
-    // }
-
-    // std::cout << positionMatrix << std::endl;
-    // //screen(positionMatrix);
-    // // std::cout << "Matrix size " << m.rows() << " " << m.cols() << std::endl;
-    // // for (int c = 0; c < 5; c++) {
-    // //     for (int r = 0; r < 3; r++) {
-    // //         std::cout << positionMatrix(c,r) << " ";
-    // //     }
-    // //     std::cout << std::endl;
-    // // }
-    // std::cout << "hellooo" << std::endl;
-
-    // cox_linefit();
-
-    // // for (long unsigned int i = 0; i < buffer.length(); i++) {
-
-    // // }
 
 
 
