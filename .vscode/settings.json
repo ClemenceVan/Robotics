@@ -108,6 +108,7 @@
         "future": "cpp",
         "shared_mutex": "cpp",
         "source_location": "cpp",
-        "strstream": "cpp"
+        "strstream": "cpp",
+        "*.ipp": "cpp"
     }
 }

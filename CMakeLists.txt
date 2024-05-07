@@ -19,6 +19,31 @@ if(NOT ftxui_POPULATED)
   add_subdirectory(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+# --- Fetch Eigen --------------------------------------------------------------
+FetchContent_Declare(eigen
+  GIT_REPOSITORY https://gitlab.com/libeigen/eigen
+  GIT_TAG 3.3.9
+)
+
+FetchContent_GetProperties(eigen)
+if(NOT eigen_POPULATED)
+  FetchContent_Populate(eigen)
+  add_library(Eigen INTERFACE)
+  target_include_directories(Eigen INTERFACE ${eigen_SOURCE_DIR})
+endif()
+
+# --- Fetch Standalone Asio ---------------------------------------------------
+FetchContent_Declare(asio
+  GIT_REPOSITORY https://github.com/chriskohlhoff/asio
+  GIT_TAG asio-1-18-2
+)
+
+FetchContent_GetProperties(asio)
+if(NOT asio_POPULATED)
+  FetchContent_Populate(asio)
+  add_library(Asio INTERFACE)
+  target_include_directories(Asio INTERFACE ${asio_SOURCE_DIR}/asio/include)
+endif()
 # ------------------------------------------------------------------------------
 
 # Set the build directory to ./build
@@ -28,7 +53,7 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
 # Collect all .cpp files in the src/ directory
-file(GLOB_RECURSE SOURCES ${SOURCE_DIR}/main.cpp)
+file(GLOB_RECURSE SOURCES ${SOURCE_DIR}/*.cpp)
 
 # Add an executable with the collected sources
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -44,6 +69,8 @@ target_link_libraries(${PROJECT_NAME}
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component # Not needed for this example.
+  PRIVATE Eigen # Added Eigen library
+  PRIVATE Asio # Added Asio library
 )
 
 if (EMSCRIPTEN) 
