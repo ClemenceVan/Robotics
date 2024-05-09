@@ -16,7 +16,17 @@ typedef struct{
 } MotorDataType;
 
 
-void Send_Read_Motor_Data(MotorDataType *);	
+void Send_Read_Motor_Data(MotorDataType *);
+#ifdef _WIN32
+	void Send_Read_Motor_Data(MotorDataType *MotorData) {
+		MotorData->Set_Speed_M1 = 0;
+		MotorData->Set_Speed_M2 = 0;
+		MotorData->Act_Speed_M1 = 0;
+		MotorData->Act_Speed_M2 = 0;
+		MotorData->Encoder_M1 = 0;
+		MotorData->Encoder_M2 = 0;
+	}
+#endif
 
 #endif
 

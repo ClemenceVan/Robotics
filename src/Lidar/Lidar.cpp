@@ -9,8 +9,8 @@ Lidar::Lidar(Arena arena, bool display, std::string path) {
                     sin(this->_gamma), cos(this->_gamma), this->beta,
                     0, 0, 1;
     // robot to world coordinates
-    this->CMatrix <<  cos(this->start_angle), -sin(this->start_angle), this->posX,
-                sin(this->start_angle), cos(this->start_angle), this->posY,
+    this->CMatrix <<  cos(this->posA), -sin(this->posA), this->posX,
+                sin(this->posA), cos(this->posA), this->posY,
                 0, 0, 1;
     if (path == "") {
         this->serverAddress.sin_family = AF_INET;

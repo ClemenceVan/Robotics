@@ -15,6 +15,11 @@ float Lidar::calculate_median(std::vector<double> list) {
 
 void Lidar::cox_linefit() {
     this->ddx, this->ddy, this->dda = 0;
+    this->positionMutex.lock();
+    double localX = this->posX;
+    double localY = this->posY;
+    int localA = this->posA;
+    this->positionMutex.unlock();
     int max_iterations = 10;
 
     this->positionMatrix = this->getData();
@@ -49,8 +54,8 @@ void Lidar::cox_linefit() {
                 sin(this->_gamma), cos(this->_gamma), this->beta,
                 0, 0, 1;
 
-        this->CMatrix <<  cos(this->start_angle), -sin(this->start_angle), this->posX,
-                sin(this->start_angle), cos(this->start_angle), this->posY,
+        this->CMatrix <<  cos(localA), -sin(localA), localX,
+                sin(localA), cos(localA), localY,
                 0, 0, 1;
 
         Xs = this->RMatrix * this->positionMatrix.transpose();
@@ -117,58 +122,55 @@ void Lidar::cox_linefit() {
         
         // Vm = current robot coordinates: 
         Eigen::Vector2d Vm; 
-        Vm << this->posX,this->posY;
+        Vm << localX, localY;
     
         // split unit vectors in x-coordinate, y-coordinate and angle
-        for (int j = 0; j < unit_vectors_updated.rows(); j++) 
-        {
+        for (int j = 0; j < unit_vectors_updated.rows(); j++) {
             A(j, 0) = unit_vectors_updated(j,0); // x coordinate
             A(j, 1) = unit_vectors_updated(j,1); // y coordinate
             float a = (unit_vectors_updated.row(j) * rotation).dot( all_vi_updated.row(j) - Vm.transpose());
             A(j, 2) = a; // angle
         }
 
-        // create b matrix, which contains the correction of the position:
+        /* create b matrix, which contains the correction of the position */
         Eigen::MatrixXd b;
         b = (A.transpose() * A).inverse() * A.transpose() * all_yi_eigen;
 
-        //update "overall congurnce" (how far it is from the original position of robot? :-) :-S):
+        /* update "overall congurance" (how far it is from the original position of robot) */
         this->ddx = this->ddx + b(0);
         this->ddy = this->ddy + b(1);
         this->dda = this->dda + b(2);
-            // std::cout << "this->ddx = " << this->ddx << ", this->ddy = " << this->ddy << ", this->dda = " << this->dda << std::endl;
 
-        // update robot position:
-        this->posX = this->posX + b(0);
-        this->posY = this->posY + b(1);
-        //this->start_angle = fmod(this->start_angle + b(2), 2*M_PI); // need modulus 2*pi here maybe ? 
-        this->start_angle = this->start_angle + b(2);
-        // covariance matrix calculations (uncertainty): 
+        /* update robot position */
+        localX = localX + b(0);
+        localY = localY + b(1);
+        localA = localA + b(2);
+
+        /* covariance matrix calculations (uncertainty) */
         int n = A.rows();
         float s2 = (all_yi_eigen-A*b).transpose().dot(all_yi_eigen -A*b) / (n-4);
-        Eigen::MatrixXd covariance_matrix;  // to be moved for use with kalman
-        covariance_matrix = s2 * (A.transpose() * A).inverse();
-        //std::cout << covariance_matrix << std::endl;
+        this->covariance = s2 * (A.transpose() * A).inverse();
 
-        // check if the process has converged
-        if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) // && abs(b(2)) < 0.1 * M_PI / 180
-        {
-            //std::cout << "convergeance number = " << sqrt(pow(b(0),2) + pow(b(1),2)) << std::endl;
-            //std::cout << "converged at iteration: " << i << std::endl;
-            //std::cout << "this->ddx = " << this->ddx << ", this->ddy = " << this->ddy << ", this->dda = " << this->dda << std::endl;
-            std::cout << std::endl << "robot position: Rx = " << this->posX << ", Ry = " << this->posY << ", Ra = " << this->start_angle * 180 / M_PI << std::endl;
-            //std::cout << "covariance matrix: " << covariance_matrix << std::endl;
-            //std::cout << "all_vi after converged: "<< all_vi_updated << std::endl;
-            screen(temp,all_vi_updated);  
-            // display->updatePositions(temp, all_vi_updated);
+        /* check if the process has converged */
+        if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) { // && abs(b(2)) < 0.1 * M_PI / 180
+            std::cout << std::endl << "robot position: Rx = " << localX << ", Ry = " << localY << ", Ra = " << localA * 180 / M_PI << std::endl;
+            screen(temp,all_vi_updated);
+            this->positionMutex.lock();
+            this->posX = localX;
+            this->posY = localY;
+            this->posA = localA;
+            this->positionMutex.unlock();
             return;
         }
 
     }
     
-    //std::cout << "did not converge, iterated all loops of cox" << std::endl;
-            std::cout << std::endl << "robot position: Rx = " << this->posX << ", Ry = " << this->posY << ", Ra = " << this->start_angle * 180 / M_PI << std::endl;
-    screen(temp,all_vi); 
-    // display->updatePositions(temp, all_vi);
-    
+    std::cout << "did not converge, iterated all loops of cox" << std::endl;
+    std::cout << std::endl << "robot position: Rx = " << localX << ", Ry = " << localY << ", Ra = " << localA * 180 / M_PI << std::endl;
+    this->positionMutex.lock();
+    this->posX = localX;
+    this->posY = localY;
+    this->posA = localA;
+    this->positionMutex.unlock();
+    screen(temp,all_vi);
 }

@@ -54,6 +54,7 @@ set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
 # Collect all .cpp files in the src/ directory
 file(GLOB_RECURSE SOURCES ${SOURCE_DIR}/*.cpp)
+set (SOURCES ${SOURCES} ${CMAKE_SOURCE_DIR}/libraries/ina219.so)
 # set(SOURCES
 #   ${SOURCE_DIR}/main.cpp
 #   ${SOURCE_DIR}/screentest.cpp
@@ -75,6 +76,10 @@ target_link_libraries(${PROJECT_NAME}
   PRIVATE ftxui::component # Not needed for this example.
   PRIVATE Eigen # Added Eigen library
   PRIVATE Asio # Added Asio library
+  # PRIVATE m uncomment for pi
+  # PRIVATE pthread
+  # PRIVATE robotic_gcc
+  # PRIVATE wiringPi
 )
 
 if (EMSCRIPTEN) 
@@ -86,6 +91,10 @@ if (EMSCRIPTEN)
     configure_file("src/${file}" ${file})
   endforeach(file)
 endif()
+
+# Append additional linker flags
+# set(INA219_LIB ${CMAKE_SOURCE_DIR}/libraries/ina219.so)
+# string(APPEND CMAKE_EXE_LINKER_FLAGS " ${INA219_LIB}")
 
 # Move the compiled binary to the root directory
 set_target_properties(${PROJECT_NAME} PROPERTIES

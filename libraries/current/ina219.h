@@ -172,11 +172,13 @@ class INA219
         */
         void configure(int voltage_range, int gain, int bus_adc, int shunt_adc);
 
+        #ifndef _WIN32
         /**
          * @brief Put the INA219 into power down mode.
          * 
          */
         void sleep();
+        #endif
 
         /**
          * @brief Wake the INA219 from power down mode.

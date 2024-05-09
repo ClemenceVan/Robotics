@@ -99,6 +99,6 @@ for (int i = 0; i < new_positions.rows(); i++)
     Render(screen, document);
     screen.Print();
     // getchar();
-
+    std::cout << std::endl;
     return 0;
 }

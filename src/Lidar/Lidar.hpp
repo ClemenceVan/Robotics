@@ -1,6 +1,6 @@
 #include "../include.hpp"
 #include "../Display.hpp"
-#include "../Arena.hpp"
+#include "../Robot/Arena.hpp"
 // #include "asio/include/asio.hpp"
 // #include <asio.hpp>
 
@@ -14,7 +14,7 @@ class Lidar {
     int _gamma = (-90 * (int)M_PI / 180) / 4;
     double posX = 13.5; // to be changed when start
     double posY = 10.5; // to be changed when start
-    int start_angle = 0;
+    int posA = 0;
     double ddx = 0;
     double ddy = 0;
     double dda = 0;
@@ -24,6 +24,7 @@ class Lidar {
     Eigen::MatrixXd positionMatrixPoll = Eigen::MatrixXd::Zero(360, 3);
     Eigen::MatrixXd positionMatrix = Eigen::MatrixXd::Zero(1, 3);
     Eigen::Matrix<double, 4, 4> line_model;
+    Eigen::MatrixXd covariance = Eigen::MatrixXd::Zero(3, 3);
     int lines = 0;
 
     std::mutex mtx;
@@ -40,6 +41,8 @@ class Lidar {
     std::ifstream data;
 
     std::thread pollingThread;
+    std::mutex positionMutex;
+    int _positionsUpdated = 0;
 
     public:
     Lidar(Arena arena, bool display = true, std::string path = "");
@@ -68,4 +71,35 @@ class Lidar {
     float calculate_median(std::vector<double> list);
 
     void cox_linefit();
+
+    
+    double getPosX() {
+        return posX;
+    }
+
+    double getPosY() {
+        return posY;
+    }
+
+    double getPosA() {
+        return posA;
+    }
+
+    Eigen::MatrixXd getCovariance() {
+        return covariance;
+    }
+
+    void waitForUpdate() {
+        while (!_positionsUpdated);
+        _positionsUpdated = 0;
+    }
+
+    void updatePosition(double x, double y, double a) {
+        this->positionMutex.lock();
+        this->posX = x;
+        this->posY = y;
+        this->posA = a;
+        this->positionMutex.unlock();
+        _positionsUpdated = 1;
+    }
 };

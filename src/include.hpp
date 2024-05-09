@@ -37,7 +37,7 @@
 #ifdef _WIN32
     #define close closesocket
     #define read(x, y, z) recv(x, y, z, 0)
-    #define sleep(x) Sleep(1000 * x)
+    #define sleep(x) Sleep(1000 * x) // x in seconds
 #endif
 #ifndef _INIT_ARENA_
     #define _INIT_ARENA_

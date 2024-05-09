@@ -26,7 +26,7 @@
 #include "Eigen/Dense"
 
 #include "./include.hpp"
-#include "./Arena.hpp"
+#include "../Robot/Arena.hpp"
 
 using namespace ftxui;
 
