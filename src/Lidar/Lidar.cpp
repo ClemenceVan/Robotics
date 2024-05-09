@@ -99,3 +99,49 @@ void Lidar::pollLidarData() {
         }
     }
 }
+
+
+int Lidar::isDataReady() {
+    mtx.lock();
+    int l = this->lines;
+    mtx.unlock();
+    if (l >= 359) return 1;
+    return 0;
+}
+
+Eigen::MatrixXd Lidar::getData() {
+    mtx.lock();
+    Eigen::MatrixXd m = this->positionMatrixPoll;
+    mtx.unlock();
+    return m;
+}
+    
+double Lidar::getPosX() {
+    return posX;
+}
+
+double Lidar::getPosY() {
+    return posY;
+}
+
+double Lidar::getPosA() {
+    return posA;
+}
+
+Eigen::MatrixXd Lidar::getCovariance() {
+    return covariance;
+}
+
+void Lidar::waitForUpdate() {
+    while (!_positionsUpdated);
+    _positionsUpdated = 0;
+}
+
+void Lidar::updatePosition(double x, double y, double a) {
+    this->positionMutex.lock();
+    this->posX = x;
+    this->posY = y;
+    this->posA = a;
+    this->positionMutex.unlock();
+    _positionsUpdated = 1;
+}
