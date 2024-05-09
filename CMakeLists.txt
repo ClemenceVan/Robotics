@@ -54,6 +54,10 @@ set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
 # Collect all .cpp files in the src/ directory
 file(GLOB_RECURSE SOURCES ${SOURCE_DIR}/*.cpp)
+# set(SOURCES
+#   ${SOURCE_DIR}/main.cpp
+#   ${SOURCE_DIR}/screentest.cpp
+# )
 
 # Add an executable with the collected sources
 add_executable(${PROJECT_NAME} ${SOURCES})

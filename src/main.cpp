@@ -1,20 +1,27 @@
-#include "./Lidar.hpp"
+#include "./Lidar/Lidar.hpp"
 #include "./Display.hpp"
 #include "./Arena.hpp"
-#include "./Motors.hpp"
+// #include "./Motors.hpp"
 
-// int main(void) {
-//     Arena arena({27, 57}, {13.5, 10.5});
+#ifdef _WIN32
+    #define PATH "../testfile90.txt"
+#else
+    #define PATH ""
+#endif
 
-//     Lidar lidar(arena, true);
-//     while (!lidar.isDataReady());
+int main(void) {
+    // Arena arena({39, 54}, {39/2, 54/2});
+    Arena arena({57, 27}, {14, 29});
 
-//     while (true) {
-//         lidar.cox_linefit();
-//         sleep(1);
-//     }
-// }
+    Lidar lidar(arena, false, PATH);
+    while (!lidar.isDataReady());
 
-int main() {
-    motors();
+    while (true) {
+        lidar.cox_linefit();
+        sleep(1);
+    }
 }
+
+// int main() {
+//     motors();
+// }

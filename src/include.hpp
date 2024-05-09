@@ -41,8 +41,6 @@
 #endif
 #ifndef _INIT_ARENA_
     #define _INIT_ARENA_
-    // int width = 27;
-    // int height = 57;
-    // double start_x = 13.5; // to be changed when start
-    // double start_y = 10.5; // to be changed when start
 #endif
+
+int screen(Eigen::MatrixXd positions, Eigen::MatrixXd new_positions);
