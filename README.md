@@ -4,8 +4,11 @@
 
 Create build directory
 <code>mkdir build</code>
+<code>cd build</code>
+<code>cmake ..</code>
 
 Build project
+<code>cd ..</code>
 <code>cmake --build ./build</code>
 
 Execute binary
