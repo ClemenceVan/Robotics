@@ -2,4 +2,5 @@
 *cmake*
 *.sln
 *.vscode
-*build
+*build*
+*Debug*
