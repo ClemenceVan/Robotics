@@ -78,6 +78,8 @@ void Robot::start() {
 
 void Robot::run() {
     motors->setSpeed(1500, 1500);
+    int objX = arena->getSize().first / 2;
+    int objY = arena->getSize().second / 2;
     while (!lidar->isDataReady());
     while (_running) {
         // sleep(1);
@@ -95,6 +97,7 @@ void Robot::run() {
             // lidar->waitForUpdate();/
         this->kalman();
         display->drawCoordinates(cX, cY, cA, oX, oY, oA, posX, posY, posA);
+        // motors->velocity_profile(objX, objY, 0);
         
             // motors->getPosX(),motors->getPosY(), motors->getPosA(),
             // lidar->getPosX(), lidar->getPosY(), lidar->getPosA());

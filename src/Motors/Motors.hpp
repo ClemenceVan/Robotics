@@ -57,4 +57,6 @@ class Motors {
         Eigen::MatrixXd getCovariance();
 
         void setSpeed(int left, int right);
+
+        void velocity_profile(double end_x, double end_y, double end_a);
 };

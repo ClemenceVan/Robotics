@@ -17,7 +17,7 @@ void Robot::kalman() {
 
     /* merged covariance matrix: */
     Eigen::MatrixXd Sum_plus_X(3,3); 
-    Sum_plus_X << (sum_pf.inverse() + sum_Xi.inverse()).inverse(); // partial inverse instead .inverse() = .completeOrthogonalDecomposition().pseudoInverse()
+    Sum_plus_X << (sum_pf.completeOrthogonalDecomposition().pseudoInverse() + sum_Xi.completeOrthogonalDecomposition().pseudoInverse()).completeOrthogonalDecomposition().pseudoInverse(); // partial inverse instead .inverse() = .completeOrthogonalDecomposition().pseudoInverse()
 
     //std::cout << " kalman merged covariance: " << Sum_plus_X << std::endl;
     Eigen::VectorXd Xminus_i(3);
@@ -25,7 +25,7 @@ void Robot::kalman() {
 
     /* --- kalman filter:--- */
     Eigen::VectorXd Xplusi(3);
-    Xplusi = sum_pf * (sum_pf + sum_Xi).inverse() * Xminus_i + sum_Xi * (sum_pf + sum_Xi).inverse() * X_pf;
+    Xplusi = sum_pf * (sum_pf + sum_Xi).completeOrthogonalDecomposition().pseudoInverse() * Xminus_i + sum_Xi * (sum_pf + sum_Xi).completeOrthogonalDecomposition().pseudoInverse() * X_pf;
 
     posX = Xplusi(0);
     posY = Xplusi(1);

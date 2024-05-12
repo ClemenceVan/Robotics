@@ -138,8 +138,8 @@ bool Lidar::cox_linefit() {
 
         /* create b matrix, which contains the correction of the position */
         Eigen::MatrixXd b;
-        b = (A.transpose() * A).inverse() * A.transpose() * all_yi_eigen;
-
+        //b = (A.transpose() * A).inverse() * A.transpose() * all_yi_eigen; // .completeOrthogonalDecomposition().pseudoInverse()
+        b = (A.transpose() * A).completeOrthogonalDecomposition().pseudoInverse() * A.transpose() * all_yi_eigen;
         /* update "overall congurance" (how far it is from the original position of robot) */
         this->ddx = this->ddx + b(0);
         this->ddy = this->ddy + b(1);
@@ -156,7 +156,8 @@ bool Lidar::cox_linefit() {
         /* covariance matrix calculations (uncertainty) */
         int n = A.rows();
         float s2 = (all_yi_eigen-A*b).transpose().dot(all_yi_eigen -A*b) / (n-4);
-        this->covariance = s2 * (A.transpose() * A).inverse();
+        // this->covariance = s2 * (A.transpose() * A).inverse();
+        this->covariance = s2 * (A.transpose() * A).completeOrthogonalDecomposition().pseudoInverse();
 
         /* check if the process has converged */
         if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) { // && abs(b(2)) < 0.1 * M_PI / 180
