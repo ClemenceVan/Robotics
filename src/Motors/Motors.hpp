@@ -26,9 +26,6 @@ class Motors {
         Eigen::MatrixXd Cxya_old = Eigen::MatrixXd::Zero(3, 3);
 
         MotorDataType MotorData;
-        #ifndef _WIN32
-            INA219 Ina(SHUNT_OHMS, MAX_EXPECTED_AMPS);
-        #endif
         double offset_m1 = 0;
         double offset_m2 = 0;
         
@@ -40,6 +37,7 @@ class Motors {
         double gearbox_ratio = 10;
         std::mutex positionMutex;
     
+        std::thread readWriteTh;
     public:
         Motors(Arena arena);
         ~Motors() {}
@@ -48,7 +46,7 @@ class Motors {
 
         void odometry();
 
-        void updatePosition(double x, double y, double a);
+        void updatePosition(double x, double y, double a, Eigen::MatrixXd cov);
 
         double getPosX();
 
@@ -57,4 +55,6 @@ class Motors {
         double getPosA();
 
         Eigen::MatrixXd getCovariance();
+
+        void setSpeed(int left, int right);
 };

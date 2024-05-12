@@ -17,6 +17,8 @@ class Robot {
         double posX = 0;
         double posY = 0;
         double posA = 0;
+        /* Battery */
+        static const int SPI_Channel = 1;
         /* Modules */
         Arena *arena;
         Lidar *lidar;
@@ -25,9 +27,11 @@ class Robot {
         /* Threads */
         std::thread lidarTh;
         std::thread motorsTh;
-
+        std::thread displayTh;
+        std::thread batteryTh;
+        bool _running = false;
     public:
-        Robot(Arena *arena);
+        Robot(Arena *arena, bool display = false);
 
         ~Robot();
 

@@ -1195,6 +1195,174 @@ ftxui_example_window/fast:
 	$(MAKE) $(MAKESILENT) -f _deps/ftxui-build/examples/dom/CMakeFiles/ftxui_example_window.dir/build.make _deps/ftxui-build/examples/dom/CMakeFiles/ftxui_example_window.dir/build
 .PHONY : ftxui_example_window/fast
 
+src/Lidar/Cox.o: src/Lidar/Cox.cpp.o
+.PHONY : src/Lidar/Cox.o
+
+# target to build an object file
+src/Lidar/Cox.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Lidar/Cox.cpp.o
+.PHONY : src/Lidar/Cox.cpp.o
+
+src/Lidar/Cox.i: src/Lidar/Cox.cpp.i
+.PHONY : src/Lidar/Cox.i
+
+# target to preprocess a source file
+src/Lidar/Cox.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Lidar/Cox.cpp.i
+.PHONY : src/Lidar/Cox.cpp.i
+
+src/Lidar/Cox.s: src/Lidar/Cox.cpp.s
+.PHONY : src/Lidar/Cox.s
+
+# target to generate assembly for a file
+src/Lidar/Cox.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Lidar/Cox.cpp.s
+.PHONY : src/Lidar/Cox.cpp.s
+
+src/Lidar/Lidar.o: src/Lidar/Lidar.cpp.o
+.PHONY : src/Lidar/Lidar.o
+
+# target to build an object file
+src/Lidar/Lidar.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Lidar/Lidar.cpp.o
+.PHONY : src/Lidar/Lidar.cpp.o
+
+src/Lidar/Lidar.i: src/Lidar/Lidar.cpp.i
+.PHONY : src/Lidar/Lidar.i
+
+# target to preprocess a source file
+src/Lidar/Lidar.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Lidar/Lidar.cpp.i
+.PHONY : src/Lidar/Lidar.cpp.i
+
+src/Lidar/Lidar.s: src/Lidar/Lidar.cpp.s
+.PHONY : src/Lidar/Lidar.s
+
+# target to generate assembly for a file
+src/Lidar/Lidar.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Lidar/Lidar.cpp.s
+.PHONY : src/Lidar/Lidar.cpp.s
+
+src/Motors/Motors.o: src/Motors/Motors.cpp.o
+.PHONY : src/Motors/Motors.o
+
+# target to build an object file
+src/Motors/Motors.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Motors/Motors.cpp.o
+.PHONY : src/Motors/Motors.cpp.o
+
+src/Motors/Motors.i: src/Motors/Motors.cpp.i
+.PHONY : src/Motors/Motors.i
+
+# target to preprocess a source file
+src/Motors/Motors.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Motors/Motors.cpp.i
+.PHONY : src/Motors/Motors.cpp.i
+
+src/Motors/Motors.s: src/Motors/Motors.cpp.s
+.PHONY : src/Motors/Motors.s
+
+# target to generate assembly for a file
+src/Motors/Motors.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Motors/Motors.cpp.s
+.PHONY : src/Motors/Motors.cpp.s
+
+src/Motors/Odometry.o: src/Motors/Odometry.cpp.o
+.PHONY : src/Motors/Odometry.o
+
+# target to build an object file
+src/Motors/Odometry.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Motors/Odometry.cpp.o
+.PHONY : src/Motors/Odometry.cpp.o
+
+src/Motors/Odometry.i: src/Motors/Odometry.cpp.i
+.PHONY : src/Motors/Odometry.i
+
+# target to preprocess a source file
+src/Motors/Odometry.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Motors/Odometry.cpp.i
+.PHONY : src/Motors/Odometry.cpp.i
+
+src/Motors/Odometry.s: src/Motors/Odometry.cpp.s
+.PHONY : src/Motors/Odometry.s
+
+# target to generate assembly for a file
+src/Motors/Odometry.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Motors/Odometry.cpp.s
+.PHONY : src/Motors/Odometry.cpp.s
+
+src/Robot/Arena.o: src/Robot/Arena.cpp.o
+.PHONY : src/Robot/Arena.o
+
+# target to build an object file
+src/Robot/Arena.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Arena.cpp.o
+.PHONY : src/Robot/Arena.cpp.o
+
+src/Robot/Arena.i: src/Robot/Arena.cpp.i
+.PHONY : src/Robot/Arena.i
+
+# target to preprocess a source file
+src/Robot/Arena.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Arena.cpp.i
+.PHONY : src/Robot/Arena.cpp.i
+
+src/Robot/Arena.s: src/Robot/Arena.cpp.s
+.PHONY : src/Robot/Arena.s
+
+# target to generate assembly for a file
+src/Robot/Arena.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Arena.cpp.s
+.PHONY : src/Robot/Arena.cpp.s
+
+src/Robot/Kalman.o: src/Robot/Kalman.cpp.o
+.PHONY : src/Robot/Kalman.o
+
+# target to build an object file
+src/Robot/Kalman.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Kalman.cpp.o
+.PHONY : src/Robot/Kalman.cpp.o
+
+src/Robot/Kalman.i: src/Robot/Kalman.cpp.i
+.PHONY : src/Robot/Kalman.i
+
+# target to preprocess a source file
+src/Robot/Kalman.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Kalman.cpp.i
+.PHONY : src/Robot/Kalman.cpp.i
+
+src/Robot/Kalman.s: src/Robot/Kalman.cpp.s
+.PHONY : src/Robot/Kalman.s
+
+# target to generate assembly for a file
+src/Robot/Kalman.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Kalman.cpp.s
+.PHONY : src/Robot/Kalman.cpp.s
+
+src/Robot/Robot.o: src/Robot/Robot.cpp.o
+.PHONY : src/Robot/Robot.o
+
+# target to build an object file
+src/Robot/Robot.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Robot.cpp.o
+.PHONY : src/Robot/Robot.cpp.o
+
+src/Robot/Robot.i: src/Robot/Robot.cpp.i
+.PHONY : src/Robot/Robot.i
+
+# target to preprocess a source file
+src/Robot/Robot.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Robot.cpp.i
+.PHONY : src/Robot/Robot.cpp.i
+
+src/Robot/Robot.s: src/Robot/Robot.cpp.s
+.PHONY : src/Robot/Robot.s
+
+# target to generate assembly for a file
+src/Robot/Robot.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/Robot/Robot.cpp.s
+.PHONY : src/Robot/Robot.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -1218,6 +1386,30 @@ src/main.s: src/main.cpp.s
 src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
+
+src/screentest.o: src/screentest.cpp.o
+.PHONY : src/screentest.o
+
+# target to build an object file
+src/screentest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/screentest.cpp.o
+.PHONY : src/screentest.cpp.o
+
+src/screentest.i: src/screentest.cpp.i
+.PHONY : src/screentest.i
+
+# target to preprocess a source file
+src/screentest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/screentest.cpp.i
+.PHONY : src/screentest.cpp.i
+
+src/screentest.s: src/screentest.cpp.s
+.PHONY : src/screentest.s
+
+# target to generate assembly for a file
+src/screentest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Robot.dir/build.make CMakeFiles/Robot.dir/src/screentest.cpp.s
+.PHONY : src/screentest.cpp.s
 
 # Help Target
 help:
@@ -1311,9 +1503,33 @@ help:
 	@echo "... ftxui_example_window"
 	@echo "... ftxui_example_with_restored_io"
 	@echo "... screen"
+	@echo "... src/Lidar/Cox.o"
+	@echo "... src/Lidar/Cox.i"
+	@echo "... src/Lidar/Cox.s"
+	@echo "... src/Lidar/Lidar.o"
+	@echo "... src/Lidar/Lidar.i"
+	@echo "... src/Lidar/Lidar.s"
+	@echo "... src/Motors/Motors.o"
+	@echo "... src/Motors/Motors.i"
+	@echo "... src/Motors/Motors.s"
+	@echo "... src/Motors/Odometry.o"
+	@echo "... src/Motors/Odometry.i"
+	@echo "... src/Motors/Odometry.s"
+	@echo "... src/Robot/Arena.o"
+	@echo "... src/Robot/Arena.i"
+	@echo "... src/Robot/Arena.s"
+	@echo "... src/Robot/Kalman.o"
+	@echo "... src/Robot/Kalman.i"
+	@echo "... src/Robot/Kalman.s"
+	@echo "... src/Robot/Robot.o"
+	@echo "... src/Robot/Robot.i"
+	@echo "... src/Robot/Robot.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/screentest.o"
+	@echo "... src/screentest.i"
+	@echo "... src/screentest.s"
 .PHONY : help
 
 

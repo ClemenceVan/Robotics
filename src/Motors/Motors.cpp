@@ -1,4 +1,4 @@
-#include "../../../libraries/spi_com.h"
+#include "../../libraries/spi_com.h"
 
 #ifdef _WIN32 // simulate motor data on windows
 	#ifndef _READ_MOTOR_DATA_
@@ -23,20 +23,23 @@ Motors::Motors(Arena arena): arena(arena) {
     prevPosX = posX;
     prevPosY = posY;
     prevPosA = posA;
-    #ifndef _WIN32
-        wiringPiSetup(); 
-        wiringPiSPISetup(SPI_Channel, 1000000);
-        Ina.configure(RANGE_16V, GAIN_8_320MV, ADC_12BIT, ADC_12BIT);
-    #endif
 
-    MotorDataType motor;
-    Send_Read_Motor_Data(&MotorData);
+    // MotorDataType motor;
+    // Send_Read_Motor_Data(&MotorData);
     
     // printf("\u001b[35m\n");
     
     Send_Read_Motor_Data(&MotorData);
     offset_m1 = MotorData.Encoder_M1;
     offset_m2 = -MotorData.Encoder_M2;
+
+    this->readWriteTh = std::thread([this] {
+        while(true) {
+            usleep(100000);
+            Send_Read_Motor_Data(&MotorData);
+        }
+    });
+    this->readWriteTh.detach();
 }
 
 std::pair<double, double> Motors::refreshEncoders() {
@@ -44,7 +47,7 @@ std::pair<double, double> Motors::refreshEncoders() {
     return std::make_pair(-(MotorData.Encoder_M1) - offset_m1, MotorData.Encoder_M2 - offset_m2);
 }
 
-void Motors::updatePosition(double x, double y, double a) {
+void Motors::updatePosition(double x, double y, double a, Eigen::MatrixXd cov) {
     positionMutex.lock();
     prevPosX = x; // right coordinates to update ?
     prevPosY = y;
@@ -52,6 +55,7 @@ void Motors::updatePosition(double x, double y, double a) {
     posX = x;
     posY = y;
     posA = a;
+    Cxya_old = cov;
     positionMutex.unlock();
 }
 
@@ -69,4 +73,10 @@ double Motors::getPosA() {
 
 Eigen::MatrixXd Motors::getCovariance() {
     return covariance;
+}
+
+void Motors::setSpeed(int left, int right) {
+    MotorData.Set_Speed_M1 = left;
+	MotorData.Set_Speed_M2 = -right;
+    Send_Read_Motor_Data(&MotorData);
 }

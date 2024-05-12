@@ -5,6 +5,8 @@ void Motors::odometry(){
     double current_enc_l = encoders.first;
     double current_enc_r = encoders.second;
 
+    //std::cout << "odometry: encoder values: l = " << current_enc_l << ", r = " << current_enc_r << std::endl;
+
     //----Kinematic model of a differential drive robot: ------
     double C = PULSES_PER_REVOLUTION * 6.6 * gearbox_ratio * 4 / circumference_wheel; // C = Nbr of pulses per mm = pulses per revolution * gearbox ratio * 4 (counts per puls) /circumference wheel
     double dt = 0.05;//50 / 1000; // sample time
@@ -18,6 +20,8 @@ void Motors::odometry(){
     double dA = w*dt; // A = theta = angle
     double dX =  L * cos(dA/2);
     double dY = L * sin(dA/2);
+
+    //std::cout << "odometry: dx = " << dX << ", dy = " << dY << ", da = " << dA << std::endl;
     
     //-----covariance stuff: -------
 
@@ -47,30 +51,30 @@ void Motors::odometry(){
     Cu  << (pow(SIGMAr,2) + pow(SIGMAl,2))/4,CV,
             CV,(pow(SIGMAr,2)+ pow(SIGMAl,2))/(pow(wheel_base,2));
 
-    // std::cout << "Axya = " << Axya << std::endl;
-    // std::cout << "Cxya_old = " << Cxya_old << std::endl;
-    // std::cout << "Au = " << Au << std::endl;
-    // std::cout << "Cu = " << Cu << std::endl;
+    // // std::cout << "Axya = " << Axya << std::endl;
+    // // std::cout << "Cxya_old = " << Cxya_old << std::endl;
+    // // std::cout << "Au = " << Au << std::endl;
+    // // std::cout << "Cu = " << Cu << std::endl;
 
+    positionMutex.lock();
     covariance = Axya*Cxya_old*Axya.transpose() + Au*Cu*Au.transpose(); //Cxya_new in matlab code
     
-    // std::cout << "covaraince odometry: " << covariance << std::endl;
+    // // std::cout << "covaraince odometry: " << covariance << std::endl;
 
     /* create position in global coordinate system */
-    positionMutex.lock();
     posX = prevPosX + dX*cos(prevPosA) - dY*sin(prevPosA);
     posY = prevPosY + dY*cos(prevPosA) - dX*sin(prevPosA);
     posA = prevPosA + dA;
 
     
-    std::cout << "Odometry Position: x = " << posX << ", y = " << posY << ", angle = " << posA << std::endl;
+    // std::cout << "Odometry Position: x = " << posX << ", y = " << posY << ", angle = " << posA << std::endl;
     /* update values */
     prevPosX = posX;
     prevPosY = posY;
     prevPosA = posA;
+    Cxya_old = covariance;
     positionMutex.unlock();
     prev_enc_l = current_enc_l;
     prev_enc_r = current_enc_r;
-    Cxya_old = covariance;
     
 }

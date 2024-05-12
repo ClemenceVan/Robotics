@@ -13,16 +13,20 @@ float Lidar::calculate_median(std::vector<double> list) {
     return median;
 }
 
-void Lidar::cox_linefit() {
+bool Lidar::cox_linefit() {
     this->ddx, this->ddy, this->dda = 0;
     this->positionMutex.lock();
     double localX = this->posX;
     double localY = this->posY;
-    int localA = this->posA;
+    double localA = this->posA; // was int 
+   // std::cout << "cox (at start) : localX: " << localX << ", localY: " << localY << ", localA: " << localA << std::endl;
     this->positionMutex.unlock();
     int max_iterations = 10;
 
     this->positionMatrix = this->getData();
+   // std::cout << "cox: (at beginning) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
+
+   // std::cout << "this.positionMatrix.rows() " << this->positionMatrix.rows() << std::endl;
 
     Eigen::Matrix<double, 4, 2> unit_vectors;
     std::vector<double> line_distances;
@@ -140,11 +144,14 @@ void Lidar::cox_linefit() {
         this->ddx = this->ddx + b(0);
         this->ddy = this->ddy + b(1);
         this->dda = this->dda + b(2);
+       // std::cout << "cox b matrix: " << b << std::endl;
 
+        //std::cout << "cox (right before updating position): localX: " << localX << ", localY: " << localY << ", localA: " << localA << std::endl;
         /* update robot position */
         localX = localX + b(0);
         localY = localY + b(1);
         localA = localA + b(2);
+       // std::cout << "cox (right after updating) : localX: " << localX << ", localY: " << localY << ", localA: " << localA << std::endl;
 
         /* covariance matrix calculations (uncertainty) */
         int n = A.rows();
@@ -153,24 +160,33 @@ void Lidar::cox_linefit() {
 
         /* check if the process has converged */
         if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) { // && abs(b(2)) < 0.1 * M_PI / 180
-            std::cout << std::endl << "robot position: Rx = " << localX << ", Ry = " << localY << ", Ra = " << localA * 180 / M_PI << std::endl;
-            screen(temp,all_vi_updated);
+        //std::cout << "converged at iteration " << i << std::endl;
+            // std::cout << std::endl << "robot position: Rx = " << localX << ", Ry = " << localY << ", Ra = " << localA * 180 / M_PI << std::endl;
+            // screen(temp,all_vi_updated);
+            if (this->display != nullptr)
+                this->display->coxDrawing(temp, all_vi_updated);
+            std::cout << "cox: (at almost end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
             this->positionMutex.lock();
             this->posX = localX;
             this->posY = localY;
             this->posA = localA;
             this->positionMutex.unlock();
-            return;
+            //std::cout << "cox: (at the very end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
+            return true;
         }
-
     }
     
-    std::cout << "did not converge, iterated all loops of cox" << std::endl;
-    std::cout << std::endl << "robot position: Rx = " << localX << ", Ry = " << localY << ", Ra = " << localA * 180 / M_PI << std::endl;
+   // std::cout << "did not converge, iterated all loops of cox" << std::endl;
+   // std::cout << "cox: (at almost end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
+    // std::cout << std::endl << "robot position: Rx = " << localX << ", Ry = " << localY << ", Ra = " << localA * 180 / M_PI << std::endl;
     this->positionMutex.lock();
     this->posX = localX;
     this->posY = localY;
     this->posA = localA;
     this->positionMutex.unlock();
-    screen(temp,all_vi);
+    if (this->display != nullptr)
+        this->display->coxDrawing(temp, all_vi);
+   // std::cout << "cox: (at the very end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
+    return false;
+    // screen(temp,all_vi);
 }

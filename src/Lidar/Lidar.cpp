@@ -1,6 +1,6 @@
 #include "Lidar.hpp"
 
-Lidar::Lidar(Arena arena, bool display, std::string path) {
+Lidar::Lidar(Arena arena, Display *disp, std::string path) {
     this->arena = &arena;
     this->line_model = arena.getLineModel();
     this->posX = std::get<0>(arena.getOrigin());
@@ -12,6 +12,7 @@ Lidar::Lidar(Arena arena, bool display, std::string path) {
     this->CMatrix <<  cos(this->posA), -sin(this->posA), this->posX,
                 sin(this->posA), cos(this->posA), this->posY,
                 0, 0, 1;
+    this->display = disp;
     if (path == "") {
         this->serverAddress.sin_family = AF_INET;
         this->serverAddress.sin_port = htons(PORT);
@@ -20,7 +21,7 @@ Lidar::Lidar(Arena arena, bool display, std::string path) {
         listen(this->serverSocket, 5);
         newSock = accept(this->serverSocket, NULL, NULL);
 
-        std::cout << "New connection from: " << newSock << std::endl;
+        // std::cout << "New connection from: " << newSock << std::endl;
         pollingThread = std::thread(&Lidar::pollLidarData, this);
         pollingThread.detach();
     } else {
@@ -28,12 +29,6 @@ Lidar::Lidar(Arena arena, bool display, std::string path) {
         if (!data.is_open()) throw std::runtime_error("Could not open file");
         pollingThread = std::thread(&Lidar::readFileData, this);
         pollingThread.detach();
-    }
-    
-        // io_context.run();
-    if (display) {
-        this->display = new Display({100, 100}, arena);
-        this->display->draw();
     }
 }
 
@@ -49,7 +44,7 @@ void Lidar::readFileData() {
     int certainty, angle, distance;
     while (true) {
         while (this->data >> certainty >> angle >> distance) {
-            // std::cout << "certainty: " << certainty << " angle: " << angle << " distance: " << distance << std::endl;
+            // // std::cout << "certainty: " << certainty << " angle: " << angle << " distance: " << distance << std::endl;
             if (certainty < 10 || distance == 0) continue;
             float angles_rad = fmod((angle *(M_PI / 180)),2*M_PI);
             mtx.lock();
@@ -94,7 +89,7 @@ void Lidar::pollLidarData() {
             if (lines < 359) lines++;
             mtx.unlock();
         } else {
-            std::cout << "Invalid header" << std::endl;
+            // std::cout << "Invalid header" << std::endl;
             throw std::runtime_error("Invalid header");
         }
     }

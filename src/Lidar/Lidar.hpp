@@ -1,10 +1,6 @@
 #include "../include.hpp"
-#include "../Display.hpp"
 #include "../Robot/Arena.hpp"
-// #include "asio/include/asio.hpp"
-// #include <asio.hpp>
-
-
+#include "../Display.hpp"
 
 class Lidar {
     private:
@@ -14,7 +10,7 @@ class Lidar {
         int _gamma = (-90 * (int)M_PI / 180) / 4;
         double posX = 13.5;
         double posY = 10.5;
-        int posA = 0;
+        double posA = 0;
         double ddx = 0;
         double ddy = 0;
         double dda = 0;
@@ -29,8 +25,6 @@ class Lidar {
 
         std::mutex mtx;
 
-        Display *display;
-
         bool _isPolling = false;
         ssize_t valread;
         char buffer2[1024] = {0};
@@ -44,8 +38,10 @@ class Lidar {
         std::mutex positionMutex;
         int _positionsUpdated = 0;
 
+        Display *display;
+
     public:
-        Lidar(Arena arena, bool display = true, std::string path = "");
+        Lidar(Arena arena, Display *disp, std::string path = "");
 
         ~Lidar();
 
@@ -59,7 +55,7 @@ class Lidar {
 
         float calculate_median(std::vector<double> list);
 
-        void cox_linefit();
+        bool cox_linefit();
 
         double getPosX();
 
