@@ -14,7 +14,7 @@ void Motors::odometry(){
     double vr = (current_enc_r - prev_enc_r) / (dt*C);
 
     double v = (vr+vl)/2;
-    double w = (vr-vl)/wheel_base;
+    double w = (vr-vl)/wheel_base; 
     double L = v*dt;
     //----Movement in robot coordinate system:-----
     double dA = w*dt; // A = theta = angle
@@ -57,6 +57,7 @@ void Motors::odometry(){
     // // std::cout << "Cu = " << Cu << std::endl;
 
     positionMutex.lock();
+    this->v = v;
     covariance = Axya*Cxya_old*Axya.transpose() + Au*Cu*Au.transpose(); //Cxya_new in matlab code
     
     // // std::cout << "covaraince odometry: " << covariance << std::endl;
@@ -65,6 +66,8 @@ void Motors::odometry(){
     posX = prevPosX + dX*cos(prevPosA) - dY*sin(prevPosA);
     posY = prevPosY + dY*cos(prevPosA) - dX*sin(prevPosA);
     posA = prevPosA + dA;
+    std::cout << "odometry: prevPosA = " << prevPosA << ", dA = " << dA << ", total posA = " << posA << std::endl;
+    //updatePosition(posX, posY, posA, covariance); // maybe remove this ? odometry was working before adding this
 
     
     // std::cout << "Odometry Position: x = " << posX << ", y = " << posY << ", angle = " << posA << std::endl;

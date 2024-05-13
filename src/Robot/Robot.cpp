@@ -65,9 +65,9 @@ void Robot::start() {
             std::cout << "current voltage : " << Volt << std::endl;
             if (Volt < 10.5) {
                 std::cout << "\u001b[5m\u001b[40m\x1B[31m\u001b[1m💀💀 ERROR: voltage below 10.5 💀💀\x1B[37m\u001b[0m\u001b[35m\n" << std::endl;
-                break;
+                exit(1);
             } else if (Volt < 10.8)
-                    std::cout << "\u001b[5m\u001b[40m\x1B[33m\u001b[1m👉👈 WARNING: voltage below 10.8 🥺 \x1B[37m\u001b[0m\u001b[35m" << std::endl;
+                    while(true) std::cout << "\u001b[5m\u001b[40m\x1B[33m\u001b[1m👉👈 WARNING: voltage below 10.8 🥺 \x1B[37m\u001b[0m\u001b[35m" << std::endl;
             sleep(5);
         }
     });
@@ -93,11 +93,15 @@ void Robot::run() {
         double oY = motors->getPosY();
         double oA = motors->getPosA();
 
+        this->posX = cX;
+        this->posY = cY;
+        this->posA = cA;
             // sleep(1);
             // lidar->waitForUpdate();/
         this->kalman();
+        //posA += 90 * M_PI / 180;
         display->drawCoordinates(cX, cY, cA, oX, oY, oA, posX, posY, posA);
-        // motors->velocity_profile(objX, objY, 0);
+        motors->velocity_profile(objX, objY, 0);
         
             // motors->getPosX(),motors->getPosY(), motors->getPosA(),
             // lidar->getPosX(), lidar->getPosY(), lidar->getPosA());

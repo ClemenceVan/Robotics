@@ -22,6 +22,7 @@ class Motors {
         double Dl = 0;
         double prev_enc_l = 0;
         double prev_enc_r = 0;
+        double v;
         Eigen::MatrixXd covariance = Eigen::MatrixXd::Zero(3, 3);
         Eigen::MatrixXd Cxya_old = Eigen::MatrixXd::Zero(3, 3);
 
@@ -38,6 +39,11 @@ class Motors {
         std::mutex positionMutex;
     
         std::thread readWriteTh;
+
+
+        double rho = 0;
+        double gamma = 0;
+        double delta = 0;
     public:
         Motors(Arena arena);
         ~Motors() {}
@@ -59,4 +65,10 @@ class Motors {
         void setSpeed(int left, int right);
 
         void velocity_profile(double end_x, double end_y, double end_a);
+
+        void debug_velocity(double rho, double gamma, double delta) {
+            this->rho = rho;
+            this->gamma = gamma;
+            this->delta = delta;
+        }
 };

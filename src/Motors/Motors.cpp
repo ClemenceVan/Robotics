@@ -19,6 +19,7 @@
 Motors::Motors(Arena arena): arena(arena) {
     posX = arena.getOrigin().first;
     posY = arena.getOrigin().second;
+    // posA = 90*M_PI/180;
     posA = 0;
     prevPosX = posX;
     prevPosY = posY;
@@ -30,6 +31,7 @@ Motors::Motors(Arena arena): arena(arena) {
     // printf("\u001b[35m\n");
     
     Send_Read_Motor_Data(&MotorData);
+    std::cout << "ENCODER VALUES: M1 = " << MotorData.Encoder_M1<< ", M2 = " <<MotorData.Encoder_M2<< std::endl;
     offset_m1 = MotorData.Encoder_M1;
     offset_m2 = -MotorData.Encoder_M2;
 
@@ -44,7 +46,7 @@ Motors::Motors(Arena arena): arena(arena) {
 
 std::pair<double, double> Motors::refreshEncoders() {
     Send_Read_Motor_Data(&MotorData);
-    return std::make_pair(-(MotorData.Encoder_M1) - offset_m1, MotorData.Encoder_M2 - offset_m2);
+    return std::make_pair((MotorData.Encoder_M1) - offset_m1, -MotorData.Encoder_M2 - offset_m2);
 }
 
 void Motors::updatePosition(double x, double y, double a, Eigen::MatrixXd cov) {
@@ -60,24 +62,32 @@ void Motors::updatePosition(double x, double y, double a, Eigen::MatrixXd cov) {
 }
 
 double Motors::getPosX() {
+    positionMutex.lock();
     return posX;
+    positionMutex.unlock();
 }
 
 double Motors::getPosY() {
+    positionMutex.lock();
     return posY;
+    positionMutex.unlock();
 }
 
 double Motors::getPosA() {
+    positionMutex.lock();
     return posA;
+    positionMutex.unlock();
 }
 
 Eigen::MatrixXd Motors::getCovariance() {
+    positionMutex.lock();
     return covariance;
+    positionMutex.unlock();
 }
 
 void Motors::setSpeed(int left, int right) {
-    MotorData.Set_Speed_M1 = left;
-	MotorData.Set_Speed_M2 = -right;
+    MotorData.Set_Speed_M1 = -left;
+	MotorData.Set_Speed_M2 = right;
     Send_Read_Motor_Data(&MotorData);
 }
 
@@ -88,82 +98,71 @@ void Motors::velocity_profile(double end_x, double end_y, double end_a)
     // double dy = end_y - kalman_y;
     double dx = end_x - posX;
     double dy = end_y - posY;
-    double kalman_a = posA;
+    double kalman_a = posA +90*M_PI/180;
+    double total_v = this->v;
     positionMutex.unlock();
     std::cout << "velocity profile dx = " << dx << ", dy = " << dy << std::endl;
-    double epsilon = atan2(dy,dx); // be careful of dx close to zero ? 
+
+    double epsilon = 0;
+    if(dx >= 0.1)
+        epsilon = atan2(dy,dx);
+    else
+        epsilon = 1;
+
+    
+    //double epsilon = atan2(dy,dx); // be careful of dx close to zero ?
+    
     std::cout << "epsilon = " << epsilon << std::endl;
+
     double d = sqrt(pow(dy,2)+pow(dx,2)); // distance to drive when we have turned;
+
+    if(d <= 3)
+    {
+        std::cout << "close to endpoint, robot should stop UwU" << std::endl;
+        //setSpeed(0,0);
+    }
     std::cout << "d = " << d << std::endl;
+    //print kalman- 
+    //epsilon = 1.45917 ~ 90 deg
+    //gamma = 1.62135  ~ 90 deg this should be 0
+    //delta = -1.45917 ~ 90  degr should be 0
+    std::cout << "kalman_a = " << kalman_a << std::endl;
     double gamma = epsilon - kalman_a; // the angle we should turn to in global coordinate system to aim at new position
     std::cout << "gamma = " << gamma << std::endl;
-    double delta = end_a - gamma - kalman_a; // desired angle in world
+
+    double delta = end_a - gamma - kalman_a; // desired angle in world //end_a - epsilon
     std::cout << "delta = " << delta << std::endl;
 
-    std::cout << "delta" << delta << std::endl;
-    double k_rho = 0.1;
-    double k_gamma = 0.1; 
-    double k_delta = 0.1; // can change this value
-    double rho = sqrt(dx*dx + dy*dy); // ?????? dont know value of this
+    // double k_rho = 10;
+    // double k_gamma = 5; 
+    // double k_delta = 0.1; // can change this value
+    double k_rho = this->rho;
+    double k_gamma = this->gamma;
+    double k_delta = this->delta;
+    std::cout << "k_rho = " << k_rho << ", k_gamma = " << k_gamma << ", k_delta = " << k_delta << std::endl;
+
+    double rho = sqrt(dx*dx + dy*dy); // ?????? dont know value of this   // whst is
+    //double rho = total_v;
     std::cout << "rho = " << rho << std::endl;
+
     double v_new = k_rho*rho;
     std::cout << "v_new = " << v_new << std::endl;
-    double w_new = k_gamma * gamma + k_delta * delta;
+
+    double w_new = k_gamma * gamma; // + k_delta * delta;
     std::cout << "w_new = " << w_new << std::endl;
-    double v_right =( v_new + w_new * wheel_base / 2) * 1000;
-    double v_left = (v_new - w_new*wheel_base / 2) * 1000;
+
+    double v_right =( v_new + w_new * wheel_base / 2);
+    double v_left = (v_new - w_new*wheel_base / 2) ;
+    // double v_left =( v_new + w_new * wheel_base / 2);
+    // double v_right= (v_new - w_new*wheel_base / 2) ;
+
     std::cout << "v_left = " << v_left << ", v_right = " << v_right << std::endl;
+    
     setSpeed(v_left > 7000 ? 7000 : v_left, v_right > 7000 ? 7000 : v_right);
     // MotorData.Set_Speed_M1 = v_left;
     // MotorData.Set_Speed_M2 = v_right;
 
     //-----------------------------------------------
     
-    // double treshhold = 1;
-    // if (abs(gamma - kalman_a) < treshold ) // if it finnished rotating / aiming at end position -> drive forward
-    // {
-    //     if(abs(kalman_x-end_x) < treshhold && abs(kalman_y-end_y) < treshhold ) // if at end position, stop
-    //     {
-    //         MotorData.Set_Speed_M1 = 0;
-    //         MotorData.Set_Speed_M2 = 0;
-    //         std::cout << "stopped at end position" << std::endl;
-    //     {
-    //     else
-    //     {
-    //         MotorData.Set_Speed_M1 = 300;
-    //         MotorData.Set_Speed_M2 = -300;
-    //         std::cout << "drive forward" << std::endl;
-    //     }
-
-       
-    // }
-    // else if(gamma > 0 ) //if we want to rotate to positive angle , then drive with left wheel to rotate left
-    // {
-    //     MotorData.Set_Speed_M1 = 300; // maybe change these, dont know which way it will rotate with these settings before trying
-    //     MotorData.Set_Speed_M2 = 300;
-    //     std::cout << "should rotate left " << std::endl;
-    // }
-    // else //if we want to rotate to negative angle , then drive with right wheel to rotate right
-    // {
-    //     MotorData.Set_Speed_M1 = -300;
-    //     MotorData.Set_Speed_M2 = -300;
-    //     std::cout << "should rotate right" << std::endl;
-    // }
-    
-    //-----------------------------------------------
-    
-    // if (delta < -5) {
-    //     MotorData.Set_Speed_M1 = 300;
-    //     MotorData.Set_Speed_M2 = -100;
-    // } else if (delta > 5) {
-    //     MotorData.Set_Speed_M1 = 100;
-    //     MotorData.Set_Speed_M2 = -300;
-    // } else {
-    //     MotorData.Set_Speed_M1 = 300;
-    //     MotorData.Set_Speed_M2 = -300;
-    // }
-
-    //set speed of motors:
-    // MotorData.Set_Speed_M1 = 0;
-    // MotorData.Set_Speed_M2 = 0;
+   
 }

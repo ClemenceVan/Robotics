@@ -10,7 +10,7 @@ class Lidar {
         int _gamma = (-90 * (int)M_PI / 180) / 4;
         double posX = 13.5;
         double posY = 10.5;
-        double posA = 0;
+        double posA = 0;//90*M_PI/180;
         double ddx = 0;
         double ddy = 0;
         double dda = 0;

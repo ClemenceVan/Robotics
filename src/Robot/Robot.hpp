@@ -16,7 +16,7 @@ class Robot {
         /* Coordinates */
         double posX = 0;
         double posY = 0;
-        double posA = 0;
+        double posA = 90*M_PI/180; //was 0
         /* Battery */
         static const int SPI_Channel = 1;
         /* Modules */
@@ -40,4 +40,8 @@ class Robot {
         void run();
 
         void kalman();
+
+        void debug_velocity(double rho, double gamma, double delta) {
+            motors->debug_velocity(rho, gamma, delta);
+        }
 };

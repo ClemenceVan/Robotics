@@ -10,6 +10,13 @@
 #include <thread>
 #include <mutex>
 
+// #ifndef _DEBUG_VALS
+//     #define _DEBUG_VALS
+//     double global_rho = 10;
+//     double global_gamma = 5; 
+//     double global_delta = 0.1; // can change this value
+// #endif
+
 #ifdef _WIN32
     #include <winsock2.h>
     #include <windows.h>
