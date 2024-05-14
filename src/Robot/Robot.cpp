@@ -33,15 +33,15 @@ Robot::~Robot() {
 
 void Robot::start() {
     /* Lidar thread */
-    // this->lidarTh = std::thread([&]() {
-    //     while (!lidar->isDataReady());
-    //     while (_running) {
-    //         lidar->cox_linefit();
-    //         // sleep(1);
-    //         lidar->waitForUpdate();
-    //     }
-    // });
-    // this->lidarTh.detach();
+    this->lidarTh = std::thread([&]() {
+        while (!lidar->isDataReady());
+        while (_running) {
+            lidar->cox_linefit();
+            // sleep(1);
+            lidar->waitForUpdate();
+        }
+    });
+    this->lidarTh.detach();
     /* *** */
 
     /* Motors thread */
@@ -77,7 +77,7 @@ void Robot::start() {
 }
 
 void Robot::run() {
-    motors->setSpeed(1500, 1500);
+    motors->setSpeed(1400, 1500);
     int objX = arena->getSize().first / 2;
     int objY = arena->getSize().second / 2;
     while (!lidar->isDataReady());
@@ -100,8 +100,11 @@ void Robot::run() {
             // lidar->waitForUpdate();/
         this->kalman();
         //posA += 90 * M_PI / 180;
+            std::this_thread::sleep_for(500ms);
         display->drawCoordinates(cX, cY, cA, oX, oY, oA, posX, posY, posA);
-        motors->velocity_profile(objX, objY, 0);
+        // motors->velocity_profile(100.5, 34, 0);
+        motors->velocity_profile(22, 203, -90*M_PI/180);
+        // motors->velocity_profile(objX, objY, 0);
         
             // motors->getPosX(),motors->getPosY(), motors->getPosA(),
             // lidar->getPosX(), lidar->getPosY(), lidar->getPosA());

@@ -110,6 +110,7 @@
         "source_location": "cpp",
         "strstream": "cpp",
         "*.ipp": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "hash_map": "cpp"
     }
 }

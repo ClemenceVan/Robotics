@@ -72,7 +72,7 @@ class Display {
             for (int i = 0; i < new_positions.rows(); i++)
                 c.DrawPoint((new_positions(i, 0) + CenterPointX) / scale, (new_positions(i, 1) + CenterPointY) / scale, true, Color::Green);
                 auto document = canvas(&c) | border;
-            this->draw();
+            // this->draw();
         }
 
         void drawCoordinates(double cX, double cY, double cA, double oX, double oY, double oA, double kX, double kY, double kA) {

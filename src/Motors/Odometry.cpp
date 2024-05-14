@@ -4,7 +4,7 @@ void Motors::odometry(){
     std::pair<double, double> encoders = refreshEncoders();
     double current_enc_l = encoders.first;
     double current_enc_r = encoders.second;
-
+    // std::cout << "ENCODER values in odometry: l = " << current_enc_l << ", r = " << current_enc_r << std::endl;
     //std::cout << "odometry: encoder values: l = " << current_enc_l << ", r = " << current_enc_r << std::endl;
 
     //----Kinematic model of a differential drive robot: ------
@@ -21,7 +21,7 @@ void Motors::odometry(){
     double dX =  L * cos(dA/2);
     double dY = L * sin(dA/2);
 
-    //std::cout << "odometry: dx = " << dX << ", dy = " << dY << ", da = " << dA << std::endl;
+    std::cout << "odometry: dx = " << dX << ", dy = " << dY << ", da = " << dA << std::endl;
     
     //-----covariance stuff: -------
 
@@ -60,13 +60,13 @@ void Motors::odometry(){
     this->v = v;
     covariance = Axya*Cxya_old*Axya.transpose() + Au*Cu*Au.transpose(); //Cxya_new in matlab code
     
-    // // std::cout << "covaraince odometry: " << covariance << std::endl;
+// std::cout << "covariance odometry: " << covariance << std::endl;
 
     /* create position in global coordinate system */
     posX = prevPosX + dX*cos(prevPosA) - dY*sin(prevPosA);
-    posY = prevPosY + dY*cos(prevPosA) - dX*sin(prevPosA);
-    posA = prevPosA + dA;
-    std::cout << "odometry: prevPosA = " << prevPosA << ", dA = " << dA << ", total posA = " << posA << std::endl;
+    posY = prevPosY + dY*cos(prevPosA) + dX*sin(prevPosA);
+    posA = fmod(prevPosA + dA,2*M_PI);
+    // std::cout << "odometry: prevPosA = " << prevPosA << ", dA = " << dA << ", total posA = " << posA << std::endl;
     //updatePosition(posX, posY, posA, covariance); // maybe remove this ? odometry was working before adding this
 
     
@@ -76,6 +76,7 @@ void Motors::odometry(){
     prevPosY = posY;
     prevPosA = posA;
     Cxya_old = covariance;
+    std::cout << posX << " " << posY << " " << posA << std::endl;
     positionMutex.unlock();
     prev_enc_l = current_enc_l;
     prev_enc_r = current_enc_r;

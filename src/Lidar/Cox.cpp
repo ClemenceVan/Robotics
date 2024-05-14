@@ -166,7 +166,7 @@ bool Lidar::cox_linefit() {
             // screen(temp,all_vi_updated);
             if (this->display != nullptr)
                 this->display->coxDrawing(temp, all_vi_updated);
-            std::cout << "cox: (at almost end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
+            //std::cout << "cox: (at almost end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
             this->positionMutex.lock();
             this->posX = localX;
             this->posY = localY;
