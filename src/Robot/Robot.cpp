@@ -15,6 +15,7 @@ Robot::Robot(Arena *arena, bool display): arena(arena) {
 
     this->lidar = new Lidar(*arena, display ? this->display : nullptr, PATH);
     this->motors = new Motors(*arena);
+    this->camera = new Camera();
     _running = true;
 }
 
@@ -44,6 +45,7 @@ void Robot::start() {
     // this->lidarTh.detach();
     /* *** */
 
+    camera->start();
     /* Motors thread */
     this->motorsTh = std::thread([&]() {
         while (_running) {
@@ -77,7 +79,7 @@ void Robot::start() {
 }
 
 void Robot::run() {
-    motors->setSpeed(1500, 1500);
+    // motors->setSpeed(1500, 1500);
     int objX = arena->getSize().first / 2;
     int objY = arena->getSize().second / 2;
     while (!lidar->isDataReady());
@@ -101,7 +103,7 @@ void Robot::run() {
         this->kalman();
         //posA += 90 * M_PI / 180;
         display->drawCoordinates(cX, cY, cA, oX, oY, oA, posX, posY, posA);
-        motors->velocity_profile(objX, objY, 0);
+        // motors->velocity_profile(objX, objY, 0);
         
             // motors->getPosX(),motors->getPosY(), motors->getPosA(),
             // lidar->getPosX(), lidar->getPosY(), lidar->getPosA());

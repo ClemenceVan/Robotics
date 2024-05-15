@@ -3,6 +3,7 @@
 #include "Arena.hpp"
 #include "../Lidar/Lidar.hpp"
 #include "../Motors/Motors.hpp"
+#include "../Camera/Camera.hpp"
 #include "../Display.hpp"
 
 #ifdef _WIN32 // if on windows, use file as data source to simulate lidar
@@ -24,6 +25,7 @@ class Robot {
         Lidar *lidar;
         Motors *motors;
         Display *display;
+        Camera *camera;
         /* Threads */
         std::thread lidarTh;
         std::thread motorsTh;

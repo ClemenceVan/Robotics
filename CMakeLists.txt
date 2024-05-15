@@ -21,6 +21,12 @@ endif()
 
 # ------------------------------------------------------------------------------
 
+# Find the OpenCV package
+find_package(OpenCV REQUIRED)
+
+# Include the OpenCV headers
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 # Set the build directory to ./build
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 
@@ -45,6 +51,7 @@ target_link_libraries(Robot
   PRIVATE pthread
   PRIVATE robotic_gcc
   PRIVATE wiringPi
+  ${OpenCV_LIBS}
 #  PRIVATE ina219
 )
 
