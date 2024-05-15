@@ -19,8 +19,8 @@
 Motors::Motors(Arena arena): arena(arena) {
     posX = arena.getOrigin().first;
     posY = arena.getOrigin().second;
-    //posA = 90*M_PI/180;
-    posA = 0;
+    posA = 90*M_PI/180;
+    //posA = 0;
     prevPosX = posX;
     prevPosY = posY;
     prevPosA = posA;
@@ -34,6 +34,7 @@ Motors::Motors(Arena arena): arena(arena) {
     std::cout << "ENCODER VALUES: M1 = " << MotorData.Encoder_M1<< ", M2 = " <<MotorData.Encoder_M2<< std::endl;
     offset_m1 = MotorData.Encoder_M1;
     offset_m2 = -MotorData.Encoder_M2;
+    std::cout << "Offset m1 = " << offset_m1 << ", offset m2 = " << offset_m2 << std::endl;
 
     this->readWriteTh = std::thread([this] {
         while(true) {
@@ -49,7 +50,7 @@ Motors::Motors(Arena arena): arena(arena) {
 std::pair<double, double> Motors::refreshEncoders() {
     this->motorMutex.lock();
     Send_Read_Motor_Data(&MotorData);
-    std::pair<double, double> encoders = std::make_pair(MotorData.Encoder_M1 - offset_m1, -MotorData.Encoder_M2 - offset_m2);
+    std::pair<double, double> encoders = std::make_pair(MotorData.Encoder_M1 - offset_m1, MotorData.Encoder_M2 - offset_m2);
     this->motorMutex.unlock();
     return encoders;
 }
@@ -110,10 +111,10 @@ void Motors::velocity_profile(double end_x, double end_y, double end_a)
     positionMutex.lock();
     double dx = end_x - posX;
     double dy = end_y - posY;
-    double kalman_a = fmod(posA +90*M_PI/180 ,2*M_PI); // 
+    double kalman_a = fmod(posA ,2*M_PI); //posA + 90*PI/180
     double total_v = this->v;
     positionMutex.unlock();
-    //std::cout << "velocity profile dx = " << dx << ", dy = " << dy << std::endl;
+    std::cout << "velocity profile dx = " << dx << ", dy = " << dy << std::endl;
 
     double epsilon = 0;
     if(dx <= 0.1 && dx >= 0)
@@ -136,7 +137,11 @@ void Motors::velocity_profile(double end_x, double end_y, double end_a)
     //delta = -1.45917 ~ 90  degr should be 0
    // std::cout << "kalman_a = " << kalman_a << std::endl;
     double gamma = epsilon - kalman_a; // the angle we should turn to in global coordinate system to aim at new position
-    //std::cout << "gamma = " << gamma << std::endl;
+    if(gamma >= M_PI)
+        gamma = gamma - 2*M_PI;
+    else if(gamma <= -M_PI)
+        gamma = gamma + 2*M_PI;
+    std::cout << "gamma = " << gamma << std::endl;
 
     double delta = end_a - gamma - kalman_a; // desired angle in world //end_a - epsilon
     //std::cout << "delta = " << delta << std::endl;
