@@ -37,6 +37,7 @@ class Motors {
         double MM_PER_PULSE = circumference_wheel / PULSES_PER_REVOLUTION;
         double gearbox_ratio = 10;
         std::mutex positionMutex;
+        std::mutex motorMutex;
     
         std::thread readWriteTh;
 

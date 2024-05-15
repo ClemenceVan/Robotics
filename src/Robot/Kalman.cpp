@@ -7,8 +7,8 @@ void Robot::kalman() {
     std::cout << "cox covariance: " << lidar->getCovariance() << std::endl;
     
     Eigen::VectorXd X_pf(3);
-    std::cout << "lidar position BEGINNING of kalman: " << lidar->getPosX() << " , "<< lidar->getPosY() << " , "<< lidar->getPosA() << std::endl;
-    std::cout << "odometry position BEGINNING of kalman: " <<  motors->getPosX() << " , " <<motors->getPosY() << " , " <<motors->getPosA() << std::endl;
+    // std::cout << "lidar position BEGINNING of kalman: " << lidar->getPosX() << " , "<< lidar->getPosY() << " , "<< lidar->getPosA() << std::endl;
+    // std::cout << "odometry position BEGINNING of kalman: " <<  motors->getPosX() << " , " <<motors->getPosY() << " , " <<motors->getPosA() << std::endl;
     X_pf << lidar->getPosX(), lidar->getPosY(), lidar->getPosA();
  
 
@@ -43,8 +43,8 @@ void Robot::kalman() {
     
     //std::cout << "XXXXXXXXXXXXX kalman: x = " << posX << ", y = " << posY << ", angle = " << posA << std::endl;
 
-    std::cout << "lidar position END of kalman: " << lidar->getPosX()<< " , " <<lidar->getPosY() << " , "<< lidar->getPosA() << std::endl;
-    std::cout << "odometry position END of kalman: " <<  motors->getPosX()<< " , " <<motors->getPosY()<< " , " <<motors->getPosA() << std::endl;
+    // std::cout << "lidar position END of kalman: " << lidar->getPosX()<< " , " <<lidar->getPosY() << " , "<< lidar->getPosA() << std::endl;
+    // std::cout << "odometry position END of kalman: " <<  motors->getPosX()<< " , " <<motors->getPosY()<< " , " <<motors->getPosA() << std::endl;
 
     /* --- update positions:--- */
     motors->updatePosition(posX, posY, posA, Sum_plus_X);

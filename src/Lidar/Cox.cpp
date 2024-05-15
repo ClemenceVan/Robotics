@@ -141,6 +141,7 @@ bool Lidar::cox_linefit() {
         //b = (A.transpose() * A).inverse() * A.transpose() * all_yi_eigen; // .completeOrthogonalDecomposition().pseudoInverse()
         b = (A.transpose() * A).completeOrthogonalDecomposition().pseudoInverse() * A.transpose() * all_yi_eigen;
         /* update "overall congurance" (how far it is from the original position of robot) */
+        //std::cout  << "ddx = " << ddx  << ", ddy = "<< ddy << ", dda = "<< dda<< std::endl;
         this->ddx = this->ddx + b(0);
         this->ddy = this->ddy + b(1);
         this->dda = this->dda + b(2);
@@ -166,7 +167,7 @@ bool Lidar::cox_linefit() {
             // screen(temp,all_vi_updated);
             if (this->display != nullptr)
                 this->display->coxDrawing(temp, all_vi_updated);
-            std::cout << "cox: (at almost end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
+            //std::cout << "cox: (at almost end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
             this->positionMutex.lock();
             this->posX = localX;
             this->posY = localY;
