@@ -42,6 +42,7 @@ void Robot::kalman() {
     //posA += 90 * M_PI / 180;
     
     //std::cout << "XXXXXXXXXXXXX kalman: x = " << posX << ", y = " << posY << ", angle = " << posA << std::endl;
+    this->kalman_stream << (std::time(nullptr) - timeOffset) << " " << posX << " " << posY << " " << posA << " " <<   Sum_plus_X.reshaped(1,9) << "\n";
 
     // std::cout << "lidar position END of kalman: " << lidar->getPosX()<< " , " <<lidar->getPosY() << " , "<< lidar->getPosA() << std::endl;
     // std::cout << "odometry position END of kalman: " <<  motors->getPosX()<< " , " <<motors->getPosY()<< " , " <<motors->getPosA() << std::endl;

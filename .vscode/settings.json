@@ -111,6 +111,6 @@
         "strstream": "cpp",
         "*.ipp": "cpp",
         "core": "cpp",
-        "hash_map": "cpp"
+        "unordered_set": "cpp"
     }
 }

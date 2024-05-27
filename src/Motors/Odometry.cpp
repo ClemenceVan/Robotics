@@ -1,7 +1,18 @@
 #include "Motors.hpp"
 
-void Motors::odometry(){
+
+float normalize_angle(float angle) {
+    // Normalize the angle to be within the range of -180 to 180 degrees
+    while (angle > M_PI) angle -= 2 * M_PI;
+    while (angle < -M_PI) angle += 2 * M_PI;
+    return angle;
+}
+
+void Motors::odometry() {
+    this->motorMutex.lock();
     std::pair<double, double> encoders = refreshEncoders();
+    // std::pair<double, double> encoders = std::make_pair(this->enc_l, this->enc_r);
+    this->motorMutex.unlock();
     double current_enc_l = encoders.first;
     double current_enc_r = encoders.second;
     std::cout << "ENCODER values in odometry: l = " << current_enc_l << ", r = " << current_enc_r << std::endl;
@@ -9,7 +20,7 @@ void Motors::odometry(){
 
     //----Kinematic model of a differential drive robot: ------
     double C = PULSES_PER_REVOLUTION * 6.6 * gearbox_ratio * 4 / circumference_wheel; // C = Nbr of pulses per mm = pulses per revolution * gearbox ratio * 4 (counts per puls) /circumference wheel
-    double dt = 0.05;//50 / 1000; // sample time
+    double dt = 0.5;//50 / 1000; // sample time
     double vl = -(current_enc_l - prev_enc_l) / (dt*C); //
     double vr = (current_enc_r - prev_enc_r) / (dt*C);
 
@@ -25,7 +36,7 @@ void Motors::odometry(){
     
     //-----covariance stuff: -------
 
-    float SIGMAl = 0.5/20;// uncertainty for left encoder
+    float SIGMAl =  0.5/20;// uncertainty for left encoder
     float SIGMAr = 0.5/20;
 
     float dDr = vr;//(current_enc_l - prev_enc_l)*MM_PER_PULSE;
@@ -63,11 +74,17 @@ void Motors::odometry(){
 // std::cout << "covariance odometry: " << covariance << std::endl;
 
     /* create position in global coordinate system */
-    posX = prevPosX + dX*cos(prevPosA) + dY*sin(prevPosA);
-    posY = prevPosY + dY*cos(prevPosA) - dX*sin(prevPosA);
-    posA = fmod(prevPosA + dA,2*M_PI);
+//     posX = prevPosX + dX * cos(prevPosA) - dY * sin(prevPosA);
+// posY = prevPosY + dX * sin(prevPosA) + dY * cos(prevPosA);
+
+    posX = prevPosX + dX * cos(prevPosA) - dY * sin(prevPosA);
+    posY = prevPosY + dY * cos(prevPosA) + dX * sin(prevPosA);
+
+    // posA = fmod(prevPosA + dA,2*M_PI);
+    posA = normalize_angle(prevPosA + dA);
     // std::cout << "odometry: prevPosA = " << prevPosA << ", dA = " << dA << ", total posA = " << posA << std::endl;
     //updatePosition(posX, posY, posA, covariance); // maybe remove this ? odometry was working before adding this
+    this->odometry_stream << (std::time(nullptr) - timeOffset) << " " << this->posX << " " << this->posY << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
 
     
     // std::cout << "Odometry Position: x = " << posX << ", y = " << posY << ", angle = " << posA << std::endl;

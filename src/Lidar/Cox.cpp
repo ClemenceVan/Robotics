@@ -2,10 +2,24 @@
 
 
 float Lidar::calculate_median(std::vector<double> list) {
+
     float median = 0.0;
+
+    // std::cout << "List before sorting: ";
+    // for (const auto& value : list) {
+    //     std::cout << value << " ";
+    // }
+    // std::cout << std::endl;
+    
     // sort the list with squared distances
     std::sort(list.begin(),list.end());
-    // if nr of elements in squared dists list is odd, choose the middle element as median
+    // Print the sorted list
+    // std::cout << "List after sorting: ";
+    // for (const auto& value : list) {
+    //     std::cout << value << " ";
+    // }
+    // std::cout << std::endl;
+    // if nr of elements in squared dists list is odd, choose the middle element as median 
     if (list.size() % 2 != 0)
         median = list[ list.size()/ 2];
     else // else take averag of the two middle numbers in the list of squared distances
@@ -13,15 +27,27 @@ float Lidar::calculate_median(std::vector<double> list) {
     return median;
 }
 
+float Lidar::normalize_angle(float angle) {
+    // Normalize the angle to be within the range of -180 to 180 degrees
+    while (angle > M_PI) angle -= 2 * M_PI;
+    while (angle < -M_PI) angle += 2 * M_PI;
+    return angle;
+}
+
 bool Lidar::cox_linefit() {
-    this->ddx, this->ddy, this->dda = 0;
+    // this->ddx, this->ddy, this->dda = 0;
+    this->ddx = 0;
+    this->ddy = 0;
+    this->dda = 0;
+
+
     this->positionMutex.lock();
     double localX = this->posX;
     double localY = this->posY;
     double localA = this->posA; // was int 
    // std::cout << "cox (at start) : localX: " << localX << ", localY: " << localY << ", localA: " << localA << std::endl;
     this->positionMutex.unlock();
-    int max_iterations = 10;
+    int max_iterations = 15;
 
     this->positionMatrix = this->getData();
    // std::cout << "cox: (at beginning) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
@@ -41,8 +67,12 @@ bool Lidar::cox_linefit() {
         Eigen::Vector2d moved_Li;
         moved_Li << -Li(1), Li(0);
         unit_vectors.row(i) = moved_Li / moved_Li.norm();
-        line_distances.push_back(abs(unit_vectors.row(i).dot(point1)));
+        // std::cout << "point1 = " << point1 << std::endl;
+        // std::cout << "unit_vectors.row(i) = " << unit_vectors.row(i)<< std::endl;
+        // std::cout << "line_distances = " << abs(unit_vectors.row(i).dot(point1)) << std::endl;
+        line_distances.push_back(fabs(unit_vectors.row(i).dot(point1)));
     }
+    
     Eigen::MatrixXd temp(this->positionMatrix.rows(),3);
     Eigen::MatrixXd Xs(3, this->positionMatrix.rows());
     
@@ -66,6 +96,7 @@ bool Lidar::cox_linefit() {
     
         Xw = (this->CMatrix * Xs);
         Xwt = Xw.transpose();
+       // std::cout << "Xwt matrix: " << Xwt << std::endl;
         if(i == 0)
             temp = Xwt;
         all_vi = Xwt.block(0, 0, Xwt.rows(), 2);
@@ -73,18 +104,29 @@ bool Lidar::cox_linefit() {
 
         // connect all points to a line in these loops below
         for(int j = 0; j < all_vi.rows(); j++) { //loop throguh all lidar points
-            float min_dist = 1000000000.0;
+            float min_dist = 100000;
             float true_min_dist = min_dist;
             int closest_line_index = 0;
 
             for(int k = 0; k < this->line_model.rows(); k++) { // loop through all this->lines
                 float yi = line_distances[k] - unit_vectors.row(k).dot(all_vi.row(j));
-                if(abs(yi) < min_dist) { // if we find a line that is closer than the previous closest line, update it
-                    min_dist = abs(yi);
+                //std::cout << "yi = " << yi << std::endl;
+                // std::cout << "line_distances[k] = " << line_distances[k] << std::endl;
+                // std::cout << "unit_vectors.row(k) = "<< unit_vectors.row(k) << ", all_vi.row(j) = " << all_vi.row(j)<<", unit_vectors.row(k).dot(all_vi.row(j)) = " << unit_vectors.row(k).dot(all_vi.row(j)) << std::endl;
+                if(fabs(yi) < min_dist) { // if we find a line that is closer than the previous closest line, update it
+                    //std::cout << "FOUND NEW MIN DIST!!!!!!" << std::endl;
+                    min_dist = fabs(yi);
                     closest_line_index = k;
                     true_min_dist = yi;
+                    //std::cout << "min_dist = " << abs(yi) << ", closest_line_index = " << k << ", true_min_dist = " << yi << std::endl;
+                    
+                    
                 }
             }
+            // std::cout << "closest_line_index = " <<closest_line_index<<std::endl;
+            // std::cout << "min_dist = " << min_dist <<std::endl;
+            // std::cout << "true_min_dist = " << true_min_dist <<std::endl;
+
             assigned_line_index[j] = closest_line_index;
             squared_dists[j] = min_dist * min_dist;
             all_yi[j] = true_min_dist;
@@ -97,6 +139,7 @@ bool Lidar::cox_linefit() {
 
         // find median of squared distances:
         float median = calculate_median(squared_dists);
+        //std::cout << "median = " << median << std::endl;
 
         Eigen::VectorXd all_yi_eigen(0);
         Eigen::MatrixXd all_vi_updated(0,2);
@@ -104,7 +147,7 @@ bool Lidar::cox_linefit() {
     
         // remove all outliers from the lists. The outliers are all points which have a distance above the median to the closest line:
         for (int j = 0; j < squared_dists.size(); j++) {
-            if (squared_dists[j] <= median) { // if not an outlier, add them to new lists
+            // if (squared_dists[j] <= median) { // if not an outlier, add them to new lists
                 // update unitvectors
                 unit_vectors_updated.conservativeResize(unit_vectors_updated.rows() + 1, 2);
                 unit_vectors_updated(unit_vectors_updated.rows() - 1,0) = new_unitvectors(j,0);
@@ -116,7 +159,7 @@ bool Lidar::cox_linefit() {
                 // update distances (yi)
                 all_yi_eigen.conservativeResize(all_yi_eigen.rows()+1);
                 all_yi_eigen(all_yi_eigen.rows()-1) = all_yi[j];
-            }
+            // }
         }
     
         Eigen::MatrixXd A(unit_vectors_updated.rows(),3);
@@ -137,21 +180,25 @@ bool Lidar::cox_linefit() {
         }
 
         /* create b matrix, which contains the correction of the position */
-        Eigen::MatrixXd b;
+        Eigen::MatrixXd b; // could be a vector also?
         //b = (A.transpose() * A).inverse() * A.transpose() * all_yi_eigen; // .completeOrthogonalDecomposition().pseudoInverse()
         b = (A.transpose() * A).completeOrthogonalDecomposition().pseudoInverse() * A.transpose() * all_yi_eigen;
         /* update "overall congurance" (how far it is from the original position of robot) */
-        //std::cout  << "ddx = " << ddx  << ", ddy = "<< ddy << ", dda = "<< dda<< std::endl;
+       //std::cout <<"Cox: b.rows() = " << b.rows() << ", b.cols() = " << b.cols() << std::endl;
+      // std::cout  << ", b(2) = "<< b(2)<< std::endl;
         this->ddx = this->ddx + b(0);
         this->ddy = this->ddy + b(1);
         this->dda = this->dda + b(2);
-       // std::cout << "cox b matrix: " << b << std::endl;
+
 
         //std::cout << "cox (right before updating position): localX: " << localX << ", localY: " << localY << ", localA: " << localA << std::endl;
         /* update robot position */
         localX = localX + b(0);
         localY = localY + b(1);
-        localA = localA + b(2);
+        localA = normalize_angle(localA + b(2));
+        // localX = localX + this->ddx;
+        // localY = localY + this->ddy;
+        // localA = localA + this->dda;
        // std::cout << "cox (right after updating) : localX: " << localX << ", localY: " << localY << ", localA: " << localA << std::endl;
 
         /* covariance matrix calculations (uncertainty) */
@@ -161,8 +208,9 @@ bool Lidar::cox_linefit() {
         this->covariance = s2 * (A.transpose() * A).completeOrthogonalDecomposition().pseudoInverse();
 
         /* check if the process has converged */
-        if (sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 ) { // && abs(b(2)) < 0.1 * M_PI / 180
-        //std::cout << "converged at iteration " << i << std::endl;
+        if ((i != 0 || this->covariance(0,0) != 0 || this->covariance(1,1) != 0 || this->covariance(2,2) != 0) &&
+            sqrt(pow(b(0),2) + pow(b(1),2)) < 0.001 && fabs(b(2)) < 0.1 * M_PI / 180) {
+            std::cout << "converged at iteration " << i << std::endl;
             // std::cout << std::endl << "robot position: Rx = " << localX << ", Ry = " << localY << ", Ra = " << localA * 180 / M_PI << std::endl;
             // screen(temp,all_vi_updated);
             if (this->display != nullptr)
@@ -172,23 +220,34 @@ bool Lidar::cox_linefit() {
             this->posX = localX;
             this->posY = localY;
             this->posA = localA;
+            // this->posX = this->posX + ddx;
+            // this->posY = this->posX + ddy;
+            // this->posA = normalize_angle(this->posA + dda);
             this->positionMutex.unlock();
+            cox << (std::time(nullptr) - timeOffset) << " " << this->posX << " " << this->posY << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
             //std::cout << "cox: (at the very end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
             return true;
         }
     }
     
-   // std::cout << "did not converge, iterated all loops of cox" << std::endl;
+   std::cout << "did not converge, iterated all loops of cox" << std::endl;
    // std::cout << "cox: (at almost end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
     // std::cout << std::endl << "robot position: Rx = " << localX << ", Ry = " << localY << ", Ra = " << localA * 180 / M_PI << std::endl;
     this->positionMutex.lock();
+    Eigen::MatrixXd bad_covariance(3,3);
+    bad_covariance << 10000,10000,10000,10000,10000,10000,10000,10000,10000;
+    this->covariance = bad_covariance;
     this->posX = localX;
     this->posY = localY;
     this->posA = localA;
+    // this->posX = this->posX + ddx;
+    // this->posY = this->posX + ddy;
+    // this->posA = normalize_angle(this->posA + dda);
     this->positionMutex.unlock();
     if (this->display != nullptr)
         this->display->coxDrawing(temp, all_vi);
    // std::cout << "cox: (at the very end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
+    this->cox << (std::time(nullptr) - timeOffset) << " " << this->posX << " " << this->posY << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
     return false;
     // screen(temp,all_vi);
 }

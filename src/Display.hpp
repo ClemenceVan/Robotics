@@ -15,9 +15,9 @@
 #include "ftxui/dom/node.hpp"    // for Render
 #include "ftxui/screen/color.hpp"  // for Color, Color::Red, Color::Blue, Color::Green, ftxui
 
-#include "Eigen/Dense"
+// #include "Eigen/Dense"
 
-#include "./include.hpp"
+#include "./pch.h"
 #include "./Robot/Arena.hpp"
 
 using namespace ftxui;
@@ -77,11 +77,15 @@ class Display {
 
         void drawCoordinates(double cX, double cY, double cA, double oX, double oY, double oA, double kX, double kY, double kA) {
             std::cout << "Position: " << std::endl;
-            std::cout << "Odometry: " << oX << " " << oY << " " << oA << std::endl;
-            std::cout << "Cox: " << cX << " " << cY << " " << cA << std::endl;
+            std::cout << "Odometry: " << oX << " " << oY << " " << oA * 180 / M_PI << std::endl;
+            std::cout << "Cox: " << cX << " " << cY << " " << cA * 180 / M_PI << std::endl;
             std::cout << "Kalman: " << kX << " " << kY << " " << kA * 180 / M_PI << std::endl;
 
             c.DrawPoint((kX + CenterPointX) / scale, (kY + CenterPointY) / scale, true, Color::Blue);
+            c.DrawPoint((kX - 1 + CenterPointX) / scale, (kY - 1 + CenterPointY) / scale, true, Color::Blue);
+            c.DrawPoint((kX + 1 + CenterPointX) / scale, (kY + 1 + CenterPointY) / scale, true, Color::Blue);
+            c.DrawPoint((kX - 1 + CenterPointX) / scale, (kY + 1 + CenterPointY) / scale, true, Color::Blue);
+            c.DrawPoint((kX + 1 + CenterPointX) / scale, (kY - 1 + CenterPointY) / scale, true, Color::Blue);
         }
 
         void draw() {

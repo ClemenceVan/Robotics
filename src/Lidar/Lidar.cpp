@@ -1,6 +1,6 @@
 #include "Lidar.hpp"
 
-Lidar::Lidar(Arena arena, Display *disp, std::string path) {
+Lidar::Lidar(Arena arena, Display *disp, std::string path): cox("cox.txt") {
     this->arena = &arena;
     this->line_model = arena.getLineModel();
     this->posX = std::get<0>(arena.getOrigin());
@@ -38,6 +38,7 @@ Lidar::~Lidar() {
         close(this->serverSocket);
         // this->socket.close();
     }
+    cox.close(); // close txt file
 }
 
 void Lidar::readFileData() {
@@ -45,15 +46,16 @@ void Lidar::readFileData() {
     while (true) {
         while (this->data >> certainty >> angle >> distance) {
             // // std::cout << "certainty: " << certainty << " angle: " << angle << " distance: " << distance << std::endl;
-            if (certainty < 10 || distance == 0) continue;
+            if (certainty < 10 || distance == 0) {std::cout << "Skipped data from lidar" << std::endl; continue;}
             float angles_rad = fmod((angle *(M_PI / 180)),2*M_PI);
-            mtx.lock();
-            if (lines == 359)
+            std::cout << "certainty: " << certainty << " angle: " << angle << " distance: " << distance << std::endl;
+            mtx.lock();   
+            if (lines == 500)
                 positionMatrixPoll.block(0, 0, positionMatrixPoll.rows() - 1, 3) = positionMatrixPoll.block(1, 0, positionMatrixPoll.rows() - 1, 3);
             positionMatrixPoll(lines, 0) = distance * cos(-angles_rad) / 10;
             positionMatrixPoll(lines, 1) = distance * sin(-angles_rad) / 10;
             positionMatrixPoll(lines, 2) = 1;
-            if (lines < 359) lines++;
+            if (lines < 500) lines++;
             mtx.unlock();
         }
         this->data.clear();
@@ -65,7 +67,15 @@ void Lidar::pollLidarData() {
     while(true) {
         // Receive header
         valread = read(newSock, buffer2, 5);
-        if (valread != 5) throw std::runtime_error("Could not read header");
+        if (valread != 5) {
+            std::cout << "Could not read header" << std::endl;
+            for (int i = 0; i < 5; i++) {
+                std::cout << (int)buffer2[i] << " ";
+            }
+            throw std::runtime_error("Could not read header : " + std::to_string(valread));   
+            // std::cout << "Could not read header" << std::endl;
+            // continue;
+        }
 
         // Parse header
         if (buffer2[0] == (char)0xA5) {
@@ -78,19 +88,24 @@ void Lidar::pollLidarData() {
             unsigned int angle = (((unsigned int)buffer2[1] >> 1) + (((unsigned int)buffer2[2]) << 7)) >> 6;
             unsigned int distance = (((unsigned int)buffer2[3]) + (((unsigned int)buffer2[4]) << 8)) >> 2;
             unsigned char quality = buffer2[0] >> 2;
+            // std::cout << "quality: " << (int)quality << " angle: " << angle << " distance: " << distance << std::endl;
             if (quality < 10 || distance == 0) continue;
             double angles_rad = fmod((angle *(M_PI / 180)),2*M_PI);
             mtx.lock();
-            if (lines == 359)
+            if (lines == 499)
                 positionMatrixPoll.block(0, 0, positionMatrixPoll.rows() - 1, 3) = positionMatrixPoll.block(1, 0, positionMatrixPoll.rows() - 1, 3);
             positionMatrixPoll(lines, 0) = distance * cos(-angles_rad) / 10;
             positionMatrixPoll(lines, 1) = distance * sin(-angles_rad) / 10;
             positionMatrixPoll(lines, 2) = 1;
-            if (lines < 359) lines++;
+            if (lines < 499) lines++;
+            // std :: cout << "lines: " << lines << std::endl;
             mtx.unlock();
         } else {
-            // std::cout << "Invalid header" << std::endl;
-            throw std::runtime_error("Invalid header");
+            std::cout << "Invalid header" << std::endl;
+            for (int i = 0; i < 5; i++) {
+                std::cout << (int)buffer2[i] << " ";
+            }
+            throw std::runtime_error("Invalid header : " + std::to_string(buffer2[0]));
         }
     }
 }
@@ -100,13 +115,15 @@ int Lidar::isDataReady() {
     mtx.lock();
     int l = this->lines;
     mtx.unlock();
-    if (l >= 359) return 1;
+    if (l >= 499) return 1;
     return 0;
 }
 
 Eigen::MatrixXd Lidar::getData() {
     mtx.lock();
     Eigen::MatrixXd m = this->positionMatrixPoll;
+    this->positionMatrixPoll = Eigen::MatrixXd::Zero(500, 3);
+    this->lines = 0;
     mtx.unlock();
     return m;
 }

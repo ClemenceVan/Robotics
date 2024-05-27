@@ -1,4 +1,4 @@
-#include "../include.hpp"
+#include "../pch.h"
 
 #include "Arena.hpp"
 #include "../Lidar/Lidar.hpp"
@@ -32,6 +32,16 @@ class Robot {
         std::thread displayTh;
         std::thread batteryTh;
         bool _running = false;
+
+        /* Dev */
+        double rho = 0;
+        double gamma = 0;
+        double delta = 0;
+        double c1 = 0;
+        double c2 = 0;
+
+
+            std::ofstream kalman_stream;
     public:
         Robot(Arena *arena, bool display = false);
 
@@ -43,7 +53,22 @@ class Robot {
 
         void kalman();
 
-        void debug_velocity(double rho, double gamma, double delta) {
-            motors->debug_velocity(rho, gamma, delta);
+        bool velocity_profile(double end_x, double end_y, double end_a, double distance = NAN);
+
+        void discover();
+
+        void setFlag(std::string flag, bool value) {
+            if (flag == "window") {
+                camera->setWindowFlag(value);
+            }
+        }
+
+        void debug(double a1, double a2, double a3, double c1, double c2) {
+            this->rho = a1;
+            this->gamma = a2;
+            this->delta = a3;
+            
+            this->c1 = c1;
+            this->c2 = c2;
         }
 };

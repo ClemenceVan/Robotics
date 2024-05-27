@@ -1,7 +1,8 @@
-#include "../include.hpp"
+#include "../pch.h"
 #include "../../libraries/spi_com.h"
 #include "../../libraries/current/ina219.h"
 #include "../Robot/Arena.hpp"
+// #include "../Camera/Camera.hpp"
 #ifndef _WIN32
     #include <wiringPi.h>
     #include <wiringPiSPI.h>
@@ -22,6 +23,10 @@ class Motors {
         double Dl = 0;
         double prev_enc_l = 0;
         double prev_enc_r = 0;
+        double enc_l = 0;
+        double enc_r = 0;
+        double speedL = 0;
+        double speedR = 0;
         double v;
         Eigen::MatrixXd covariance = Eigen::MatrixXd::Zero(3, 3);
         Eigen::MatrixXd Cxya_old = Eigen::MatrixXd::Zero(3, 3);
@@ -30,7 +35,6 @@ class Motors {
         double offset_m1 = 0;
         double offset_m2 = 0;
         
-        double wheel_base = 7; // cm
         double wheel_diameter = 3; // cm
         double PULSES_PER_REVOLUTION = 1024; // ticks
         double circumference_wheel = wheel_diameter * M_PI;
@@ -40,12 +44,11 @@ class Motors {
         std::mutex motorMutex;
     
         std::thread readWriteTh;
+        bool readWriteFlag = false;
 
-
-        double rho = 0;
-        double gamma = 0;
-        double delta = 0;
+        std::ofstream odometry_stream;
     public:
+        double wheel_base = 7; // cm
         Motors(Arena arena);
         ~Motors() {}
 
@@ -63,13 +66,7 @@ class Motors {
 
         Eigen::MatrixXd getCovariance();
 
+        std::pair<int, int> getSpeed();
+
         void setSpeed(int left, int right);
-
-        void velocity_profile(double end_x, double end_y, double end_a);
-
-        void debug_velocity(double rho, double gamma, double delta) {
-            this->rho = rho;
-            this->gamma = gamma;
-            this->delta = delta;
-        }
 };
