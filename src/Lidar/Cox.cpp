@@ -224,7 +224,7 @@ bool Lidar::cox_linefit() {
             // this->posY = this->posX + ddy;
             // this->posA = normalize_angle(this->posA + dda);
             this->positionMutex.unlock();
-            cox << (std::time(nullptr) - timeOffset) << " " << this->posX << " " << this->posY << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
+            cox << (std::time(nullptr) - timeOffset) << " " << (this->posX*10) << " " << (this->posY*10) << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
             //std::cout << "cox: (at the very end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
             return true;
         }
@@ -247,7 +247,7 @@ bool Lidar::cox_linefit() {
     if (this->display != nullptr)
         this->display->coxDrawing(temp, all_vi);
    // std::cout << "cox: (at the very end) first row of positionMatrix: " << positionMatrix.row(0) << std::endl;
-    this->cox << (std::time(nullptr) - timeOffset) << " " << this->posX << " " << this->posY << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
+    this->cox << (std::time(nullptr) - timeOffset) << " " << (this->posX*10) << " " << (this->posY*10) << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
     return false;
     // screen(temp,all_vi);
 }

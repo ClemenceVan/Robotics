@@ -84,16 +84,14 @@ void Motors::odometry() {
     posA = normalize_angle(prevPosA + dA);
     // std::cout << "odometry: prevPosA = " << prevPosA << ", dA = " << dA << ", total posA = " << posA << std::endl;
     //updatePosition(posX, posY, posA, covariance); // maybe remove this ? odometry was working before adding this
-    this->odometry_stream << (std::time(nullptr) - timeOffset) << " " << this->posX << " " << this->posY << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
+    this->odometry_stream << (std::time(nullptr) - timeOffset) << " " << (this->posX*10) << " " << (this->posY*10) << " " << this->posA << " " << this->covariance.reshaped(1,9) << "\n";
 
-    
     // std::cout << "Odometry Position: x = " << posX << ", y = " << posY << ", angle = " << posA << std::endl;
     /* update values */
     prevPosX = posX;
     prevPosY = posY;
     prevPosA = posA;
     Cxya_old = covariance;
-    std::cout << posX << " " << posY << " " << posA << std::endl;
     positionMutex.unlock();
     prev_enc_l = current_enc_l;
     prev_enc_r = current_enc_r;

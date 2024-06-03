@@ -4,7 +4,7 @@ void Robot::kalman() {
     /* --- cox parameters:------ */
     Eigen::MatrixXd sum_pf(3,3);
     sum_pf << lidar->getCovariance();
-    std::cout << "cox covariance: " << lidar->getCovariance() << std::endl;
+    //std::cout << "cox covariance: " << lidar->getCovariance() << std::endl;
     
     Eigen::VectorXd X_pf(3);
     // std::cout << "lidar position BEGINNING of kalman: " << lidar->getPosX() << " , "<< lidar->getPosY() << " , "<< lidar->getPosA() << std::endl;
@@ -16,7 +16,7 @@ void Robot::kalman() {
     /* --- odometry parameters:--- */
     Eigen::MatrixXd sum_Xi(3,3);
     sum_Xi = motors->getCovariance();
-    std::cout << "odometry covariance: " << motors->getCovariance() << std::endl;
+    //std::cout << "odometry covariance: " << motors->getCovariance() << std::endl;
 
 
     if(sum_pf(1,1)> sum_Xi(1,1)){
@@ -42,7 +42,7 @@ void Robot::kalman() {
     //posA += 90 * M_PI / 180;
     
     //std::cout << "XXXXXXXXXXXXX kalman: x = " << posX << ", y = " << posY << ", angle = " << posA << std::endl;
-    this->kalman_stream << (std::time(nullptr) - timeOffset) << " " << posX << " " << posY << " " << posA << " " <<   Sum_plus_X.reshaped(1,9) << "\n";
+    this->kalman_stream << (std::time(nullptr) - timeOffset) << " " << (posX*10) << " " << (posY*10) << " " << posA << " " <<   Sum_plus_X.reshaped(1,9) << "\n";
 
     // std::cout << "lidar position END of kalman: " << lidar->getPosX()<< " , " <<lidar->getPosY() << " , "<< lidar->getPosA() << std::endl;
     // std::cout << "odometry position END of kalman: " <<  motors->getPosX()<< " , " <<motors->getPosY()<< " , " <<motors->getPosA() << std::endl;

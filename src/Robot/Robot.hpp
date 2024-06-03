@@ -27,7 +27,7 @@ class Robot {
         Display *display;
         Camera *camera;
         /* Threads */
-        std::thread lidarTh;
+        std::thread loopTh;
         std::thread motorsTh;
         std::thread displayTh;
         std::thread batteryTh;
@@ -47,11 +47,15 @@ class Robot {
 
         ~Robot();
 
+        void loop();
+
         void start();
 
         void run();
 
         void kalman();
+
+        void reverse();
 
         bool velocity_profile(double end_x, double end_y, double end_a, double distance = NAN);
 
@@ -71,4 +75,6 @@ class Robot {
             this->c1 = c1;
             this->c2 = c2;
         }
+
+        void rotate(double desired_angle,double angle_velocity);
 };

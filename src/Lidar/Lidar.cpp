@@ -1,5 +1,49 @@
 #include "Lidar.hpp"
 
+void writeDriver(std::string msg) {
+    const char* message;
+
+    if (msg == "start") {
+        std::cout << "Starting driver" << std::endl;
+    } else if (msg == "stop") {
+        std::cout << "Stopping driver" << std::endl;
+    } else {
+        std::cerr << "Invalid message" << std::endl;
+        return;
+    }
+    
+    const char* TCP_IP = "127.0.0.1";
+    const int TCP_PORT = 9887;
+    const int BUFFER_SIZE = 1024;
+
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        std::cerr << "Error creating socket" << std::endl;
+        throw std::runtime_error("Could not create socket");
+    }
+
+    // Server address structure
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(TCP_PORT);
+    inet_pton(AF_INET, TCP_IP, &server_addr.sin_addr);
+
+    // Connect to the server
+    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        std::cerr << "Error connecting to server" << std::endl;
+        close(sock);
+        throw std::runtime_error("Could not connect to server");
+    }
+
+    // Send data to the server
+    if (send(sock, message, strlen(message), 0) < 0) {
+        std::cerr << "Error sending data" << std::endl;
+        close(sock);
+        return;
+    }
+}
+
 Lidar::Lidar(Arena arena, Display *disp, std::string path): cox("cox.txt") {
     this->arena = &arena;
     this->line_model = arena.getLineModel();
@@ -14,6 +58,7 @@ Lidar::Lidar(Arena arena, Display *disp, std::string path): cox("cox.txt") {
                 0, 0, 1;
     this->display = disp;
     if (path == "") {
+        writeDriver("start");
         this->serverAddress.sin_family = AF_INET;
         this->serverAddress.sin_port = htons(PORT);
         this->serverAddress.sin_addr.s_addr = INADDR_ANY;
@@ -33,6 +78,7 @@ Lidar::Lidar(Arena arena, Display *disp, std::string path): cox("cox.txt") {
 }
 
 Lidar::~Lidar() {
+    writeDriver("stop");
     if (_isPolling) {
         close(this->newSock);
         close(this->serverSocket);
